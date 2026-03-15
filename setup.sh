@@ -121,7 +121,7 @@ download_dashboard_tarball() {
   # Find latest dashboard-v* tag via GitHub API (no auth needed for public repos)
   local clawking_tag
   clawking_tag=$(curl -fsSL "https://api.github.com/repos/MuduiClaw/ClawKing/releases" 2>/dev/null \
-    | grep -o '"tag_name":"dashboard-v[^"]*"' | head -1 | cut -d'"' -f4)
+    | grep -o '"tag_name": *"dashboard-v[^"]*"' | head -1 | sed 's/.*"dashboard/dashboard/' | tr -d '"')
   if [[ -n "$clawking_tag" ]]; then
     local clawking_url="https://github.com/MuduiClaw/ClawKing/releases/download/${clawking_tag}/infra-dashboard-standalone.tar.gz"
     if curl --connect-timeout 10 --max-time 120 -fsSL "$clawking_url" | tar xz -C "$target_dir" 2>/dev/null; then
