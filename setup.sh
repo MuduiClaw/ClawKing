@@ -79,8 +79,8 @@ get_dashboard_release_url() {
       return
     fi
   fi
-  # Fallback (no gh CLI)
-  echo "https://github.com/MuduiClaw/infra-dashboard/releases/latest/download/infra-dashboard-standalone.tar.gz"
+  # Fallback (no gh CLI) — use ClawKing (public) since infra-dashboard is private
+  echo "https://github.com/MuduiClaw/ClawKing/releases/latest/download/infra-dashboard-standalone.tar.gz"
 }
 
 # Download dashboard tarball to a target dir, handling private repo auth
@@ -117,21 +117,16 @@ download_dashboard_tarball() {
     fi
   fi
 
-  # Method 2: curl with gh token (private repo needs auth header)
-  local auth_header=""
-  if command -v gh &>/dev/null; then
-    local token
-    token=$(gh auth token 2>/dev/null || echo "")
-    [[ -n "$token" ]] && auth_header="Authorization: token $token"
-  fi
-
-  local url
-  url="$(get_dashboard_release_url)"
-  local curl_args=(--connect-timeout 10 --max-time 120 -fsSL)
-  [[ -n "$auth_header" ]] && curl_args+=(-H "$auth_header" -H "Accept: application/octet-stream")
-
-  if curl "${curl_args[@]}" "$url" | tar xz -C "$target_dir" 2>/dev/null; then
-    [ -f "$target_dir/server.js" ] && return 0
+  # Method 2: curl from ClawKing (public, no auth needed)
+  # Find latest dashboard-v* tag via GitHub API (no auth needed for public repos)
+  local clawking_tag
+  clawking_tag=$(curl -fsSL "https://api.github.com/repos/MuduiClaw/ClawKing/releases" 2>/dev/null \
+    | grep -o '"tag_name":"dashboard-v[^"]*"' | head -1 | cut -d'"' -f4)
+  if [[ -n "$clawking_tag" ]]; then
+    local clawking_url="https://github.com/MuduiClaw/ClawKing/releases/download/${clawking_tag}/infra-dashboard-standalone.tar.gz"
+    if curl --connect-timeout 10 --max-time 120 -fsSL "$clawking_url" | tar xz -C "$target_dir" 2>/dev/null; then
+      [ -f "$target_dir/server.js" ] && return 0
+    fi
   fi
 
   return 1

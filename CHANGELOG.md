@@ -16,6 +16,11 @@
 
 - mixed task log mentions showboat report
 
+
+### 🐛 修复（自动记录）
+
+- support private repo auth for dashboard downloads
+
 ---
 
 ## [1.4.0] - 2026-03-15
