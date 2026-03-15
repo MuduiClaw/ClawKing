@@ -83,6 +83,60 @@ get_dashboard_release_url() {
   echo "https://github.com/MuduiClaw/infra-dashboard/releases/latest/download/infra-dashboard-standalone.tar.gz"
 }
 
+# Download dashboard tarball to a target dir, handling private repo auth
+# Usage: download_dashboard_tarball <target_dir>
+# Returns 0 on success (server.js exists in target), 1 on failure
+download_dashboard_tarball() {
+  local target_dir="$1"
+  local tag=""
+
+  # Method 1: gh release download (handles private repos natively)
+  if command -v gh &>/dev/null; then
+    tag=$(gh api repos/MuduiClaw/infra-dashboard/releases/latest --jq '.tag_name' 2>/dev/null || echo "")
+    if [[ -n "$tag" ]]; then
+      local tmptar
+      tmptar=$(mktemp)
+      if gh release download "$tag" --repo MuduiClaw/infra-dashboard --pattern "infra-dashboard-standalone.tar.gz" --output "$tmptar" 2>/dev/null; then
+        tar xz -C "$target_dir" < "$tmptar" 2>/dev/null
+        rm -f "$tmptar"
+        [ -f "$target_dir/server.js" ] && return 0
+      fi
+      rm -f "$tmptar"
+    fi
+    # Fallback: ClawKing repo (legacy, public)
+    tag=$(gh api repos/MuduiClaw/ClawKing/releases --jq '[.[] | select(.tag_name | startswith("dashboard-"))][0].tag_name' 2>/dev/null || echo "")
+    if [[ -n "$tag" ]]; then
+      local tmptar
+      tmptar=$(mktemp)
+      if gh release download "$tag" --repo MuduiClaw/ClawKing --pattern "infra-dashboard-standalone.tar.gz" --output "$tmptar" 2>/dev/null; then
+        tar xz -C "$target_dir" < "$tmptar" 2>/dev/null
+        rm -f "$tmptar"
+        [ -f "$target_dir/server.js" ] && return 0
+      fi
+      rm -f "$tmptar"
+    fi
+  fi
+
+  # Method 2: curl with gh token (private repo needs auth header)
+  local auth_header=""
+  if command -v gh &>/dev/null; then
+    local token
+    token=$(gh auth token 2>/dev/null || echo "")
+    [[ -n "$token" ]] && auth_header="Authorization: token $token"
+  fi
+
+  local url
+  url="$(get_dashboard_release_url)"
+  local curl_args=(--connect-timeout 10 --max-time 120 -fsSL)
+  [[ -n "$auth_header" ]] && curl_args+=(-H "$auth_header" -H "Accept: application/octet-stream")
+
+  if curl "${curl_args[@]}" "$url" | tar xz -C "$target_dir" 2>/dev/null; then
+    [ -f "$target_dir/server.js" ] && return 0
+  fi
+
+  return 1
+}
+
 # --- Parse Flags ---
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -206,7 +260,6 @@ fi
 # ============================================================================
 if $UPDATE_DASHBOARD; then
   DASHBOARD_DIR="${HOME}/projects/infra-dashboard"
-  DASHBOARD_RELEASE_URL="$(get_dashboard_release_url)"
 
   step "📦" "Updating infra-dashboard"
 
@@ -227,56 +280,48 @@ if $UPDATE_DASHBOARD; then
   # Download new version
   info "Downloading latest release..."
   TMPDIR_DL=$(mktemp -d)
-  if curl --connect-timeout 10 --max-time 120 -fsSL "$DASHBOARD_RELEASE_URL" | tar xz -C "$TMPDIR_DL" 2>/dev/null; then
-    # Verify download
-    if [ -f "$TMPDIR_DL/server.js" ]; then
-      rm -rf "$DASHBOARD_DIR"
-      mv "$TMPDIR_DL" "$DASHBOARD_DIR"
+  if download_dashboard_tarball "$TMPDIR_DL"; then
+    rm -rf "$DASHBOARD_DIR"
+    mv "$TMPDIR_DL" "$DASHBOARD_DIR"
 
-      # Rebuild native addons
-      if [ -d "$DASHBOARD_DIR/node_modules/better-sqlite3" ]; then
-        SQLITE_NODE="$DASHBOARD_DIR/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
-        if [ ! -f "$SQLITE_NODE" ] || ! node -e "require('$SQLITE_NODE')" 2>/dev/null; then
-          info "Rebuilding native addon for Node $(node --version)..."
-          if ! (cd "$DASHBOARD_DIR" && npm rebuild better-sqlite3 2>/dev/null); then
-            TMPBUILD=$(mktemp -d)
-            if (cd "$TMPBUILD" && npm init -y >/dev/null 2>&1 && npm install better-sqlite3 2>/dev/null); then
-              BUILT_NODE=$(find "$TMPBUILD" -name "better_sqlite3.node" -type f 2>/dev/null | head -1)
-              [ -n "$BUILT_NODE" ] && mkdir -p "$(dirname "$SQLITE_NODE")" && cp "$BUILT_NODE" "$SQLITE_NODE"
-            fi
-            rm -rf "$TMPBUILD"
+    # Rebuild native addons
+    if [ -d "$DASHBOARD_DIR/node_modules/better-sqlite3" ]; then
+      SQLITE_NODE="$DASHBOARD_DIR/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+      if [ ! -f "$SQLITE_NODE" ] || ! node -e "require('$SQLITE_NODE')" 2>/dev/null; then
+        info "Rebuilding native addon for Node $(node --version)..."
+        if ! (cd "$DASHBOARD_DIR" && npm rebuild better-sqlite3 2>/dev/null); then
+          TMPBUILD=$(mktemp -d)
+          if (cd "$TMPBUILD" && npm init -y >/dev/null 2>&1 && npm install better-sqlite3 2>/dev/null); then
+            BUILT_NODE=$(find "$TMPBUILD" -name "better_sqlite3.node" -type f 2>/dev/null | head -1)
+            [ -n "$BUILT_NODE" ] && mkdir -p "$(dirname "$SQLITE_NODE")" && cp "$BUILT_NODE" "$SQLITE_NODE"
           fi
+          rm -rf "$TMPBUILD"
         fi
       fi
+    fi
 
-      # Restart dashboard service
-      DASH_PLIST="${HOME}/Library/LaunchAgents/com.openclaw.infra-dashboard.plist"
-      if [ -f "$DASH_PLIST" ]; then
-        launchctl unload "$DASH_PLIST" 2>/dev/null || true
-        launchctl load "$DASH_PLIST" 2>/dev/null || true
-        info "Dashboard service restarted"
-      fi
+    # Restart dashboard service
+    DASH_PLIST="${HOME}/Library/LaunchAgents/com.openclaw.infra-dashboard.plist"
+    if [ -f "$DASH_PLIST" ]; then
+      launchctl unload "$DASH_PLIST" 2>/dev/null || true
+      launchctl load "$DASH_PLIST" 2>/dev/null || true
+      info "Dashboard service restarted"
+    fi
 
-      success "infra-dashboard updated"
-      info "Backup at: $(basename "$BACKUP")"
+    success "infra-dashboard updated"
+    info "Backup at: $(basename "$BACKUP")"
 
-      # Verify
-      sleep 2
-      HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/ 2>/dev/null || echo "000")
-      if [[ "$HTTP_CODE" == "200" ]] || [[ "$HTTP_CODE" == "401" ]]; then
-        success "Dashboard responding (HTTP $HTTP_CODE)"
-      else
-        warn "Dashboard not responding (HTTP $HTTP_CODE) — check: launchctl list | grep dashboard"
-      fi
+    # Verify
+    sleep 2
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/ 2>/dev/null || echo "000")
+    if [[ "$HTTP_CODE" == "200" ]] || [[ "$HTTP_CODE" == "401" ]]; then
+      success "Dashboard responding (HTTP $HTTP_CODE)"
     else
-      rm -rf "$TMPDIR_DL"
-      error "Downloaded archive missing server.js — update aborted"
-      info "Backup preserved at: $(basename "${BACKUP:-none}")"
-      exit 1
+      warn "Dashboard not responding (HTTP $HTTP_CODE) — check: launchctl list | grep dashboard"
     fi
   else
     rm -rf "$TMPDIR_DL"
-    error "Download failed (check network)"
+    error "Download failed (check network or gh auth status)"
     exit 1
   fi
 
@@ -1501,7 +1546,6 @@ step "3/3" "启动 (Launch)"
 # --- infra-dashboard (pre-built standalone from GitHub Release) ---
 if ! $SKIP_DASHBOARD; then
   DASHBOARD_DIR="${HOME}/projects/infra-dashboard"
-  DASHBOARD_RELEASE_URL="$(get_dashboard_release_url)"
 
   # Skip if this is a source repo (developer machine with autodeploy)
   if [ -d "$DASHBOARD_DIR/.git" ] && [ ! -f "$DASHBOARD_DIR/server.js" ]; then
@@ -1510,7 +1554,7 @@ if ! $SKIP_DASHBOARD; then
     info "Installing infra-dashboard (standalone)..."
     mkdir -p "$DASHBOARD_DIR"
 
-    if curl --connect-timeout 10 --max-time 120 -fsSL "$DASHBOARD_RELEASE_URL" | tar xz -C "$DASHBOARD_DIR" 2>/dev/null; then
+    if download_dashboard_tarball "$DASHBOARD_DIR"; then
       # Rebuild native addons for local Node version (tarball may be built on different Node)
       if [ -d "$DASHBOARD_DIR/node_modules/better-sqlite3" ]; then
         SQLITE_NODE="$DASHBOARD_DIR/node_modules/better-sqlite3/build/Release/better_sqlite3.node"
@@ -1539,7 +1583,7 @@ if ! $SKIP_DASHBOARD; then
     else
       rm -rf "$DASHBOARD_DIR"
       warn "Failed to download infra-dashboard (check network)"
-      warn "Retry later: curl -fsSL $DASHBOARD_RELEASE_URL | tar xz -C ~/projects/infra-dashboard"
+      warn "Retry later: gh release download --repo MuduiClaw/infra-dashboard --pattern '*.tar.gz' -O- | tar xz -C ~/projects/infra-dashboard"
     fi
   fi
 
