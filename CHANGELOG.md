@@ -21,6 +21,11 @@
 
 - support private repo auth for dashboard downloads
 
+
+### 🐛 修复（自动记录）
+
+- grep pattern for GitHub API tag_name with spaces
+
 ---
 
 ## [1.4.0] - 2026-03-15

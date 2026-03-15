@@ -23,24 +23,17 @@ openclaw status
 ## infra-dashboard 升级
 
 ```bash
-cd ~/projects/infra-dashboard
-git pull origin main
-npm install
-npm run build
-
-# 重启 LaunchAgent
-launchctl unload ~/Library/LaunchAgents/com.openclaw.infra-dashboard.plist
-launchctl load ~/Library/LaunchAgents/com.openclaw.infra-dashboard.plist
+cd ~/ClawKing && git pull && ./setup.sh --update-dashboard
 ```
+
+一条命令完成：备份旧版 → 从 GitHub Releases 下载最新 standalone tarball → 重启服务。
+
+> 💡 不需要 clone infra-dashboard 源码。setup.sh 自动从 ClawKing releases 下载预编译包。
 
 ## ClawKing 升级
 
 ```bash
-cd ~/path-to/ClawKing
-git pull
-
-# 重新运行 setup（幂等，安全）
-./setup.sh
+cd ~/ClawKing && git pull && ./setup.sh
 ```
 
 ### 升级策略
@@ -87,8 +80,8 @@ npm update -g
 # 升级 Homebrew
 brew update && brew upgrade
 
-# 升级 ClawKing
-cd ~/path-to/ClawKing && git pull && ./setup.sh
+# 升级 ClawKing + Dashboard
+cd ~/ClawKing && git pull && ./setup.sh --update-dashboard
 ```
 
 ## 回滚
@@ -110,8 +103,11 @@ cp -a ~/clawd/scripts.bak.20260309/ ~/clawd/scripts/
 
 ### Dashboard 回滚
 ```bash
-cd ~/projects/infra-dashboard
-git log --oneline -5     # 找到之前的 commit
-git checkout <commit>
-npm run build
+# setup.sh 升级前会备份到 ~/clawd/infra-dashboard.bak.YYYYMMDD/
+# 恢复：
+DASHBOARD_DIR=~/clawd/infra-dashboard
+BACKUP=$(ls -dt ~/clawd/infra-dashboard.bak.* 2>/dev/null | head -1)
+[ -n "$BACKUP" ] && rm -rf "$DASHBOARD_DIR" && mv "$BACKUP" "$DASHBOARD_DIR"
+# 重启服务
+launchctl kickstart -k gui/$(id -u)/com.openclaw.infra-dashboard
 ```
