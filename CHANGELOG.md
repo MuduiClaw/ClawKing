@@ -14,17 +14,7 @@
 
 ### 🐛 修复（自动记录）
 
-- mixed task log mentions showboat report
-
-
-### 🐛 修复（自动记录）
-
-- support private repo auth for dashboard downloads
-
-
-### 🐛 修复（自动记录）
-
-- grep pattern for GitHub API tag_name with spaces
+- guard against overwriting source repo with standalone tarball
 
 ---
 
@@ -85,21 +75,6 @@
 ### 🔧 维护（自动记录）
 
 - add 3 behavioral tests for screenshot verification gate
-
-
-### ✨ 新功能（自动记录）
-
-- visual similarity check — ImageMagick RMSE dedup
-
-
-### 🐛 修复（自动记录）
-
-- Oracle R1 — awk replaces bc, cap 10 images
-
-
-### 🔧 维护（自动记录）
-
-- auto-generated tests (TDD gate remediation)
 
 ---
 

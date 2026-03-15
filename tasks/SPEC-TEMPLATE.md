@@ -26,6 +26,16 @@
 - **不做什么**: ...
 - **影响**: ...
 
+## Showboat 验收（脚本 / 配置 / API 类任务必须）
+
+> 非 UI 类任务必须用 `showboat exec` 录制命令+输出作为交付证据。
+> 初始化：`bash scripts/showboat-report.sh <slug> <dir>`
+> 产出：`docs/acceptance/<slug>/report.md`
+> 复验：`showboat verify docs/acceptance/<slug>/report.md`（exit 0 = 通过）
+> 混合任务（既有 UI 又有 API）：截图 + showboat 都要。
+
+- [ ] `showboat verify report.md` exit 0（如适用）
+
 ## 不做什么
 
 - <明确列出不做的事情，防止范围蔓延>
