@@ -16,6 +16,11 @@
 
 - guard against overwriting source repo with standalone tarball
 
+
+### 🐛 修复（自动记录）
+
+- harden dashboard download with Oracle-reviewed fixes
+
 ---
 
 ## [1.4.0] - 2026-03-15
