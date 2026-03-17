@@ -1,6 +1,6 @@
 # Spec: ClawKing Design System — E2B Technical Brutalism
 
-> **Status**: approved
+> **Status**: done
 > **Author**: Partner
 > **Created**: 2026-03-17
 
@@ -141,10 +141,18 @@ ClawKing 是面向中国市场的 Agent 客户端（桌面 Electron + 移动 RN�
 - **不做什么**: 不写 Screen Design 组件代码（那是 T5）
 - **影响**: Screen Design（T5）的直接输入
 
-### T5: Screen Design 组件（待执行，依赖 T4）
+### T5: Screen Design 组件（已完成）
 - **改什么**: `src/sections/{section-id}/components/`
-- **怎么验**: 组件 props-based + design tokens applied + responsive + dark mode
-- **不做什么**: 不实现真实 API 调用或状态管理
+- **产出文件** (7 个 Section × 组件):
+  - `home/`: ChannelHeader + MessageBubble + MessageBlock + MessageStream + InputArea + EmptyState
+  - `canvas/`: CanvasPanel（TOC 提取 + 简易 Markdown 渲染 + 导出菜单）
+  - `cron-panel/`: CronCard + CronPanel（状态机/Toggle/Filter/Empty）
+  - `skills-market/`: SkillCard + SkillsMarket（三Tab/搜索/分类/Empty）
+  - `settings/`: Settings（5 分组 + Compute/Agent/Memory/Account）
+  - `usage-dashboard/`: UsageDashboard（SummaryCards/BreakdownBars/BudgetWarning）
+  - `onboarding/`: Onboarding（3 步 + 模板卡片 + StepIndicator）
+- **怎么验**: 组件 props-based + 标准 Tailwind（无硬编码 hex）+ rounded-none 全局 + dark mode + responsive + 空状态
+- **不做什么**: 不实现真实 API 调用或状态管理；Canvas 使用简化渲染（生产环境需换 remark/MDX）
 - **影响**: 最终 coding agent 的开发交接物
 
 ## 不做什么
@@ -157,7 +165,7 @@ ClawKing 是面向中国市场的 Agent 客户端（桌面 Electron + 移动 RN�
 
 ## 执行顺序
 
-T1 ✅ → T2 ✅ → T3 ✅ → Oracle R1 修复 ✅ → T3.5 ✅ → Oracle R2 PASS ✅ → T4 ✅ → T5（待执行）
+T1 ✅ → T2 ✅ → T3 ✅ → Oracle R1 修复 ✅ → T3.5 ✅ → Oracle R2 PASS ✅ → T4 ✅ → T5 ✅
 
 ## 风险
 
