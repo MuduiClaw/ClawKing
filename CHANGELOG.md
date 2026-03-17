@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+
+### ✨ 新功能（自动记录）
+
+- design system + app shell — E2B Technical Brutalism
+
 ---
 
 ## [1.4.1] - 2026-03-17

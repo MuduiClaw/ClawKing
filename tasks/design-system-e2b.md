@@ -127,19 +127,18 @@ ClawKing 是面向中国市场的 Agent 客户端（桌面 Electron + 移动 RN�
 - **不做什么**: 不做 Select/Dropdown/Tooltip（T4 Section 需要时按需添加）
 - **影响**: T5 Screen Design 的原子级依赖
 
-### T4: Shape Sections（待执行）
+### T4: Shape Sections（已完成）
 - **改什么**: `product/sections/{section-id}/spec.md`
-- **计划产出**: 8 个 Section 的结构化 spec（按 roadmap 定义）
-  - `home/spec.md` — 消息流 + 输入区 + Agent 消息类型渲染
-  - `channel-list/spec.md` — 已在 Shell 中覆盖（侧边栏）
-  - `canvas/spec.md` — 富文档面板
-  - `cron-panel/spec.md` — 定时任务管理
-  - `skills-market/spec.md` — ClawHub 对接
-  - `settings/spec.md` — 设置中心
-  - `usage-dashboard/spec.md` — 用量仪表盘
-  - `onboarding/spec.md` — 引导流程
-- **怎么验**: 每个 spec 包含：功能描述 / 数据模型 / 交互流程 / 视觉规格 / 响应式行为
-- **不做什么**: 不写 Screen Design 组件代码（那是下一步）
+- **产出文件** (6 个 Section，channel-list 已在 Shell 覆盖):
+  - `home/spec.md` — 消息流 + 6 种 Agent 消息类型 + 输入区 + 斜杠指令 + 空状态
+  - `canvas/spec.md` — 富文档面板 + TOC + 导出 + 响应式覆盖策略
+  - `cron-panel/spec.md` — 任务卡片 + 开关 + 历史时间线 + 状态色（含 Warning）
+  - `skills-market/spec.md` — 安装/市场/更新三 Tab + 分类 + 搜索 + 详情
+  - `settings/spec.md` — 5 分组（Compute/Agent/Memory/Channels/Account）+ SOUL.md 编辑器
+  - `usage-dashboard/spec.md` — Summary Cards + 趋势图 + 维度下钻 + 预算预警
+  - `onboarding/spec.md` — 3 步流程 + 4 个模板预设 + Agent 对话式引导
+- **怎么验**: 每个 spec 包含：功能描述 / 数据模型(TS interface) / 交互流程 / 视觉规格 / 响应式行为 / 空状态
+- **不做什么**: 不写 Screen Design 组件代码（那是 T5）
 - **影响**: Screen Design（T5）的直接输入
 
 ### T5: Screen Design 组件（待执行，依赖 T4）
@@ -158,7 +157,7 @@ ClawKing 是面向中国市场的 Agent 客户端（桌面 Electron + 移动 RN�
 
 ## 执行顺序
 
-T1 ✅ → T2 ✅ → T3 ✅ → Oracle R1 修复 ✅ → T3.5 ✅ → Oracle R2 审核 → T4 → T5
+T1 ✅ → T2 ✅ → T3 ✅ → Oracle R1 修复 ✅ → T3.5 ✅ → Oracle R2 PASS ✅ → T4 ✅ → T5（待执行）
 
 ## 风险
 
