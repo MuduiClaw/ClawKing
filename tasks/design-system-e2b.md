@@ -197,4 +197,9 @@ Oracle 确认 R1 的 3 个 🔴 全部修复。
 2. **🔴 Settings Channels 被阉割**: 移除"即将上线"mock，真实渲染 Channel 列表（名称/类型/默认标识）+ Cron 绑定选择器（toggle 按钮绑定/解绑） + 新建/编辑/删除操作 + 空状态
 3. **🟡 UsageDashboard 空状态**: 补充 `totalTasks === 0 && breakdowns.every(empty)` 条件渲染 `NO USAGE DATA YET` 占位
 
-### R4 — 待审核
+### R4 (2026-03-17) — PASS ✅
+
+Oracle 确认 R3 的 2🔴 + 1🟡 全部修复：
+- SkillDetailPanel: 三 Tab + 动态配置表单 + 密钥 password 输入 🟢
+- Settings Channels: 列表 + Badge + Cron 绑定 toggle + 空状态 + 默认频道禁删 🟢
+- UsageDashboard: 空状态条件判断 + NO USAGE DATA YET 渲染 🟢
