@@ -6,24 +6,31 @@
 
 ## [Unreleased]
 
+---
 
-### 🐛 修复（自动记录）
+## [1.4.1] - 2026-03-17
 
-- dashboard download uses tag-based URL with dual-repo fallback, bump version display to v1.4.0
+> Bug fixes: 升级脚本加固 + cron 模板同步 + Dashboard 下载修复
 
+### 🐛 修复
 
-### 🐛 修复（自动记录）
+- **#14 cron 模板缺失**：setup.sh 部署时自动从 openclaw npm 包同步 `docs/reference/templates/`，修复 OpenClaw 3.12+ cron session 报错
+- **#15 升级 ENOTEMPTY**：safe-upgrade-openclaw.sh 新增 Phase 2.5，npm install 前先停 gateway 释放文件锁
+- Dashboard 下载使用 tag-based URL + 双仓库 fallback
+- Dashboard 下载 grep pattern 兼容 GitHub API tag_name 格式
+- 防止独立 tarball 覆盖源码仓库
+- Gate 4 TDD 跳过 .gitkeep/.gitignore 等非代码文件
+- Gate 7 混合任务日志正确引用 showboat report
 
-- guard against overwriting source repo with standalone tarball
+### 📖 文档
 
+- UPGRADE.md 路径修复
+- spec 模板新增 showboat 验证段落
+- showboat 验收证据 + Gate 7 report.md 支持
 
-### 🐛 修复（自动记录）
+### 🔧 维护
 
-- harden dashboard download with Oracle-reviewed fixes
-
-### 📖 文档（自动记录）
-
-- AGENTS.md 自动教训沉淀
+- 新增 2 个 bats 测试覆盖模板同步和升级脚本
 
 ---
 
