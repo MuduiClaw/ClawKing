@@ -56,3 +56,5 @@ ClawKing 🦞：把 battle-tested 的 OpenClaw 全套能力打包成可分发的
 - [2026-03-13] **保持文档与提示词的通用性** — 避免在模板、注释或系统提示词中引用具体的机器型号（如 "主机" 或 "服务器"），确保代码库的专业感和跨设备适配性。
 - [2026-03-14] **lsof 清理端口残留时必须加 -sTCP:LISTEN** — 避免误杀客户端进程；清理 launchd 托管服务前应先 SIGKILL 同步状态。
 - [2026-03-16] **API 响应解析禁止使用脆弱的 grep/sed** — 应优先使用 python3 -c 或 jq 处理 JSON，并显式过滤 prerelease/draft 发布以确保下载稳定。
+- [2026-03-17] **升级 npm 包前必须先停止 Gateway 进程** — Gateway 占用 dist/ 文件锁会导致 npm 产生 ENOTEMPTY 错误（#15），清理端口需配合 lsof 精确匹配。
+- [2026-03-17] **Workspace 必须同步 docs/reference/templates/ 目录** — OpenClaw 3.12+ 的 cron session 强依赖此目录下的 AGENTS.md 模板，缺失会导致启动失败（#14）。

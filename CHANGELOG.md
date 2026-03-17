@@ -16,6 +16,11 @@
 
 - T5 Screen Design — 7 section components
 
+
+### 📖 文档（自动记录）
+
+- Oracle R4 PASS — design system spec complete
+
 ---
 
 ## [1.4.1] - 2026-03-17
