@@ -1038,6 +1038,18 @@ mkdir -p "${WORKSPACE_DIR}/tasks"
 
 progress_done "Workspace → ${WORKSPACE_DIR}"
 
+# --- Sync workspace templates from openclaw package (fixes #14) ---
+# OpenClaw 3.12+ requires docs/reference/templates/ in workspace for cron sessions
+_OC_NPM_ROOT="$(npm root -g 2>/dev/null || true)"
+_OC_TPL_SRC="${_OC_NPM_ROOT}/openclaw/docs/reference/templates"
+if [ -d "$_OC_TPL_SRC" ]; then
+  mkdir -p "${WORKSPACE_DIR}/docs/reference/templates"
+  rsync -a "$_OC_TPL_SRC/" "${WORKSPACE_DIR}/docs/reference/templates/"
+  progress_done "Workspace templates synced"
+else
+  warn "OpenClaw templates not found at ${_OC_TPL_SRC} — cron sessions may fail on 3.12+"
+fi
+
 # --- qmd-safe.sh wrapper ---
 # qmd is installed to ~/.local/bin/qmd via bun, which may not be in PATH yet
 QMD_PATH="$(command -v qmd 2>/dev/null || echo "")"

@@ -21,6 +21,10 @@
 
 - harden dashboard download with Oracle-reviewed fixes
 
+### 📖 文档（自动记录）
+
+- AGENTS.md 自动教训沉淀
+
 ---
 
 ## [1.4.0] - 2026-03-15

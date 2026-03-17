@@ -358,6 +358,17 @@ openclaw cron list --all --json > "$BACKUP_DIR/cron.list.before.json" 2>/dev/nul
 # =============================================================================
 # Phase 3: Upgrade
 # =============================================================================
+step "Phase 2.5: Stop gateway before install (prevent ENOTEMPTY)"
+# Gateway holds file handles on dist/ which blocks npm rename.
+# Kill gateway process directly (don't use bootout — it may fail to bootstrap back).
+GW_PORT=$(python3 -c "import json; print(json.load(open('$HOME/.openclaw/openclaw.json')).get('gateway',{}).get('port',3456))" 2>/dev/null || echo 3456)
+zombie_pids=$(/usr/sbin/lsof -sTCP:LISTEN -ti :"$GW_PORT" 2>/dev/null || true)
+if [[ -n "$zombie_pids" ]]; then
+  log "Stopping gateway pids: $zombie_pids"
+  echo "$zombie_pids" | xargs kill -9 2>/dev/null || true
+  sleep 2
+fi
+
 step "Phase 3: Install openclaw@$TARGET_VER"
 if ! npm_install_openclaw "$TARGET_VER"; then
   err "npm install failed"
