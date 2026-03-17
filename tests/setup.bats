@@ -232,3 +232,17 @@ assert_script_not_matches() {
   assert_script_contains "codex"
   assert_script_contains "claude"
 }
+
+@test "setup.sh syncs workspace templates from openclaw package" {
+  assert_script_contains "docs/reference/templates"
+  assert_script_contains "rsync"
+  assert_script_contains "Workspace templates synced"
+}
+
+@test "safe-upgrade-openclaw.sh stops gateway before npm install" {
+  local upgrade_script="$REPO_ROOT/workspace/scripts/safe-upgrade-openclaw.sh"
+  [ -f "$upgrade_script" ]
+  grep -Fq "Phase 2.5" "$upgrade_script"
+  grep -Fq "ENOTEMPTY" "$upgrade_script"
+  grep -Fq "lsof" "$upgrade_script"
+}
