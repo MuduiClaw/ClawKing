@@ -1,3 +1,5 @@
 export { SkillsMarket } from './SkillsMarket'
 export { SkillCard } from './SkillCard'
 export type { Skill } from './SkillCard'
+export { SkillDetailPanel } from './SkillDetailPanel'
+export type { SkillDetail, SkillConfig } from './SkillDetailPanel'

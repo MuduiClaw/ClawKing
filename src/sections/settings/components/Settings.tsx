@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { Button } from '../../../shell/components/ui/Button'
 import { TextInput } from '../../../shell/components/ui/TextInput'
+import { Badge } from '../../../shell/components/ui/Badge'
+
+export interface ChannelConfig {
+  id: string
+  name: string
+  type: 'chat' | 'cron' | 'forum'
+  isDefault: boolean
+  linkedCronIds?: string[]
+}
 
 interface SettingsProps {
   activeSection?: string
@@ -16,6 +25,13 @@ interface SettingsProps {
   lcmEnabled?: boolean
   totalMemories?: number
   memoryUsageMB?: number
+  // Channels
+  channels?: ChannelConfig[]
+  availableCronJobs?: { id: string; name: string }[]
+  onChannelCreate?: () => void
+  onChannelEdit?: (channelId: string) => void
+  onChannelDelete?: (channelId: string) => void
+  onChannelCronBind?: (channelId: string, cronIds: string[]) => void
   // Account
   email?: string
   displayName?: string
@@ -216,6 +232,123 @@ function AccountSection({
   )
 }
 
+const channelTypeConfig = {
+  chat: { label: 'CHAT', variant: 'default' as const },
+  cron: { label: 'CRON', variant: 'accent' as const },
+  forum: { label: 'FORUM', variant: 'default' as const },
+}
+
+function ChannelsSection({
+  channels = [],
+  availableCronJobs = [],
+  onChannelCreate,
+  onChannelEdit,
+  onChannelDelete,
+  onChannelCronBind,
+}: Pick<SettingsProps, 'channels' | 'availableCronJobs' | 'onChannelCreate' | 'onChannelEdit' | 'onChannelDelete' | 'onChannelCronBind'>) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="font-mono text-sm font-bold uppercase tracking-tight text-black dark:text-white">
+          CHANNELS
+        </h3>
+        <Button variant="secondary" size="sm" onClick={onChannelCreate}>
+          + NEW CHANNEL
+        </Button>
+      </div>
+
+      {channels.length === 0 ? (
+        <div className="flex flex-col items-center py-12">
+          <span className="text-3xl mb-4">#</span>
+          <h4 className="font-mono text-sm font-bold uppercase tracking-tight text-black dark:text-white mb-2">
+            NO CHANNELS
+          </h4>
+          <p className="text-sm text-neutral-500 font-sans mb-4">
+            创建频道来组织 Agent 的对话和 Cron 输出
+          </p>
+          <Button variant="primary" size="sm" onClick={onChannelCreate}>
+            CREATE FIRST CHANNEL
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {channels.map((ch) => (
+            <div
+              key={ch.id}
+              className="border border-neutral-300 dark:border-neutral-800 p-4 rounded-none"
+            >
+              {/* Channel header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-400">#</span>
+                  <span className="font-sans text-sm font-semibold text-black dark:text-white">
+                    {ch.name}
+                  </span>
+                  <Badge variant={channelTypeConfig[ch.type].variant}>
+                    {channelTypeConfig[ch.type].label}
+                  </Badge>
+                  {ch.isDefault && <Badge variant="accent">DEFAULT</Badge>}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => onChannelEdit?.(ch.id)}
+                    className="px-2 py-1 text-[10px] font-mono uppercase text-neutral-500 hover:text-black dark:hover:text-white border border-neutral-300 dark:border-neutral-800 hover:border-neutral-500 rounded-none"
+                  >
+                    EDIT
+                  </button>
+                  {!ch.isDefault && (
+                    <button
+                      onClick={() => onChannelDelete?.(ch.id)}
+                      className="px-2 py-1 text-[10px] font-mono uppercase text-red-500 hover:bg-red-500 hover:text-white border border-red-300 dark:border-red-800 rounded-none"
+                    >
+                      DELETE
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Cron binding */}
+              {ch.type === 'cron' || (ch.linkedCronIds && ch.linkedCronIds.length > 0) ? (
+                <div>
+                  <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2 block">
+                    LINKED CRON TASKS
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCronJobs.map((cj) => {
+                      const isLinked = ch.linkedCronIds?.includes(cj.id) ?? false
+                      return (
+                        <button
+                          key={cj.id}
+                          onClick={() => {
+                            const newIds = isLinked
+                              ? (ch.linkedCronIds ?? []).filter((id) => id !== cj.id)
+                              : [...(ch.linkedCronIds ?? []), cj.id]
+                            onChannelCronBind?.(ch.id, newIds)
+                          }}
+                          className={`px-2 py-1 font-mono text-[10px] uppercase border rounded-none ${
+                            isLinked
+                              ? 'bg-green-600 text-white border-green-600'
+                              : 'bg-transparent text-neutral-500 border-neutral-300 dark:border-neutral-800 hover:border-neutral-500'
+                          }`}
+                        >
+                          ⏰ {cj.name}
+                        </button>
+                      )
+                    })}
+                    {availableCronJobs.length === 0 && (
+                      <span className="text-xs text-neutral-400 font-sans">无可用 Cron 任务</span>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Settings({
   activeSection = 'compute',
   onSectionChange,
@@ -256,14 +389,14 @@ export function Settings({
         {section === 'agent' && <AgentSection {...props} />}
         {section === 'memory' && <MemorySection {...props} />}
         {section === 'channels' && (
-          <div className="space-y-6">
-            <h3 className="font-mono text-sm font-bold uppercase tracking-tight text-black dark:text-white">
-              CHANNELS
-            </h3>
-            <p className="text-sm text-neutral-500 font-sans">
-              频道管理功能即将上线
-            </p>
-          </div>
+          <ChannelsSection
+            channels={props.channels}
+            availableCronJobs={props.availableCronJobs}
+            onChannelCreate={props.onChannelCreate}
+            onChannelEdit={props.onChannelEdit}
+            onChannelDelete={props.onChannelDelete}
+            onChannelCronBind={props.onChannelCronBind}
+          />
         )}
         {section === 'account' && <AccountSection {...props} />}
       </div>

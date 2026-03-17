@@ -189,8 +189,12 @@ draft → Oracle R1 FAIL → R1 修复 → Oracle R2 PASS → **approved** → i
 
 ### R2 (2026-03-17) — PASS ✅
 
-Oracle 确认 3 个 🔴 全部修复：
-- 硬编码 hex 清零 + `light:` 语法清零 🟢
-- 中文字体栈 + Warning 色 + Spacing Scale 到位 🟢
-- Base UI 组件质量合格（4 组件 × dark mode × rounded-none） 🟢
-- 空状态处理（servers=0 时显示 NO SERVERS）🟢
+Oracle 确认 R1 的 3 个 🔴 全部修复。
+
+### R3 终审 (2026-03-17) — FAIL → 2🔴 + 1🟡 修复中
+
+1. **🔴 Skills 配置详情面板缺失**: 新增 `SkillDetailPanel.tsx` — README 渲染 + 动态配置表单（TextInput/Toggle/Select/Password 按 SkillConfig 类型渲染） + Changelog tab + Install/Uninstall/Update 按钮
+2. **🔴 Settings Channels 被阉割**: 移除"即将上线"mock，真实渲染 Channel 列表（名称/类型/默认标识）+ Cron 绑定选择器（toggle 按钮绑定/解绑） + 新建/编辑/删除操作 + 空状态
+3. **🟡 UsageDashboard 空状态**: 补充 `totalTasks === 0 && breakdowns.every(empty)` 条件渲染 `NO USAGE DATA YET` 占位
+
+### R4 — 待审核

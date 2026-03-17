@@ -161,41 +161,56 @@ export function UsageDashboard({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Budget warning */}
-        {budgetLimit && (
-          <BudgetWarning current={summary.totalCost} limit={budgetLimit} />
+        {summary.totalTasks === 0 && breakdowns.every((b) => b.items.length === 0) ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-3xl mb-4">📊</span>
+            <h3 className="font-mono text-sm font-bold uppercase tracking-tight text-black dark:text-white mb-2">
+              NO USAGE DATA YET
+            </h3>
+            <p className="text-sm text-neutral-500 font-sans text-center max-w-sm">
+              Agent 开始工作后，用量数据将在这里显示
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Budget warning */}
+            {budgetLimit && (
+              <BudgetWarning current={summary.totalCost} limit={budgetLimit} />
+            )}
+
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <SummaryCard
+                label="TOKENS"
+                value={formatNumber(summary.totalTokens)}
+                trend={summary.tokensTrend}
+              />
+              <SummaryCard
+                label="COST"
+                value={summary.totalCost.toFixed(0)}
+                trend={summary.costTrend}
+                prefix="¥"
+              />
+              <SummaryCard
+                label="TASKS"
+                value={formatNumber(summary.totalTasks)}
+                trend={summary.tasksTrend}
+              />
+            </div>
+
+            {/* Breakdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {breakdowns.map((bd) => (
+                <BreakdownBar
+                  key={bd.dimension}
+                  items={bd.items}
+                  title={bd.dimension.toUpperCase()}
+                />
+              ))}
+            </div>
+          </>
         )}
-
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <SummaryCard
-            label="TOKENS"
-            value={formatNumber(summary.totalTokens)}
-            trend={summary.tokensTrend}
-          />
-          <SummaryCard
-            label="COST"
-            value={summary.totalCost.toFixed(0)}
-            trend={summary.costTrend}
-            prefix="¥"
-          />
-          <SummaryCard
-            label="TASKS"
-            value={formatNumber(summary.totalTasks)}
-            trend={summary.tasksTrend}
-          />
-        </div>
-
-        {/* Breakdowns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {breakdowns.map((bd) => (
-            <BreakdownBar
-              key={bd.dimension}
-              items={bd.items}
-              title={bd.dimension.toUpperCase()}
-            />
-          ))}
-        </div>
       </div>
     </div>
   )
