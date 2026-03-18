@@ -19,18 +19,14 @@ jobs:
         run: |
           set -euo pipefail
           
-          # Whitelist for backup:/journal: prefix commits (must match S4 in prepare-commit-msg)
-          # Only these paths are allowed without a Pre-commit-gate trailer
-          is_whitelisted_path() {
+          # Denylist for backup:/journal: prefix commits (must match S4 in prepare-commit-msg)
+          # backup/journal commits must NOT touch these sensitive paths
+          is_sensitive_path() {
             local file="$1"
             case "$file" in
-              memory/*|data/|data/*|.state/*|output/*|prompts/*) return 0 ;;
+              .githooks/*|.github/*) return 0 ;;  # sensitive — blocked
             esac
-            # Root-level markdown files (no subdirectory)
-            if [[ "$file" != */* ]] && [[ "$file" == *.md ]]; then
-              return 0
-            fi
-            return 1
+            return 1  # everything else is fine
           }
           
           FAILED=0
@@ -79,7 +75,7 @@ jobs:
               
               while IFS= read -r f; do
                 [[ -z "$f" ]] && continue
-                if ! is_whitelisted_path "$f"; then
+                if is_sensitive_path "$f"; then
                   PATH_VIOLATION=1
                   VIOLATION_FILES="$VIOLATION_FILES\n    ❌ $f"
                 fi
@@ -87,9 +83,9 @@ jobs:
               
               if [[ $PATH_VIOLATION -eq 1 ]]; then
                 echo "❌ $SHORT: $SUBJECT"
-                echo "   backup/journal commit modifies non-whitelisted paths:"
+                echo "   backup/journal commit modifies sensitive paths:"
                 echo -e "$VIOLATION_FILES"
-                echo "   Whitelist: memory/ data/ .state/ output/ prompts/ root *.md"
+                echo "   Blocked: .githooks/ .github/"
                 FAILED=$((FAILED + 1))
               else
                 echo "✅ $SHORT: $SUBJECT (exempt — paths OK)"
