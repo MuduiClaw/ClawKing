@@ -299,3 +299,77 @@ run_release_dashboard() {
   [[ "$output" == *"Download URL returned HTTP 000"* ]]
   [[ "$output" == *"Done. infra-dashboard v3.4.5 published to MuduiClaw/ClawKing releases."* ]]
 }
+
+@test "release-dashboard.sh strips data/ and internal routes from tarball" {
+  create_dashboard "4.0.0"
+
+  local dashboard_dir="$TEST_HOME/projects/infra-dashboard"
+  local standalone="$dashboard_dir/.next/standalone"
+
+  # Simulate real data files that should NOT ship
+  mkdir -p "$standalone/data"
+  printf 'REAL_DATABASE_CONTENT' > "$standalone/data/infra.db"
+  printf 'WAL' > "$standalone/data/infra.db-wal"
+  printf 'SHM' > "$standalone/data/infra.db-shm"
+
+  # Create schema.sql (should be included instead)
+  mkdir -p "$dashboard_dir/lib"
+  printf 'CREATE TABLE IF NOT EXISTS test (id INTEGER);' > "$dashboard_dir/lib/schema.sql"
+
+  # Create internal-only routes (server + static chunks)
+  local internal_pages=(content content-standards creative loop git design tech-stack)
+  for page in "${internal_pages[@]}"; do
+    mkdir -p "$standalone/.next/server/app/${page}"
+    printf 'internal' > "$standalone/.next/server/app/${page}/page.js"
+    mkdir -p "$standalone/.next/static/chunks/app/${page}"
+    printf 'internal' > "$standalone/.next/static/chunks/app/${page}/page.js"
+  done
+
+  # Create internal API routes
+  local internal_apis=(content creative loop git)
+  for api in "${internal_apis[@]}"; do
+    mkdir -p "$standalone/.next/server/app/api/${api}"
+    printf 'internal' > "$standalone/.next/server/app/api/${api}/route.js"
+    mkdir -p "$standalone/.next/static/chunks/app/api/${api}"
+    printf 'internal' > "$standalone/.next/static/chunks/app/api/${api}/route.js"
+  done
+
+  # Create a public route that SHOULD survive
+  mkdir -p "$standalone/.next/server/app/usage"
+  printf 'public' > "$standalone/.next/server/app/usage/page.js"
+  mkdir -p "$standalone/.next/static/chunks/app/usage"
+  printf 'public' > "$standalone/.next/static/chunks/app/usage/page.js"
+
+  run_release_dashboard --version 4.0.0
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Sanitizing data directory"* ]]
+  [[ "$output" == *"Included empty schema.sql"* ]]
+  [[ "$output" == *"Stripping internal-only routes"* ]]
+  [[ "$output" == *"Stripped"* ]]
+
+  # Verify tarball contents
+  [ -f "${GH_CAPTURE_TARBALL}.list" ]
+
+  # Real database must NOT be in tarball
+  ! grep -Fq "infra.db" "${GH_CAPTURE_TARBALL}.list"
+  ! grep -Fq "infra.db-wal" "${GH_CAPTURE_TARBALL}.list"
+  ! grep -Fq "infra.db-shm" "${GH_CAPTURE_TARBALL}.list"
+
+  # schema.sql SHOULD be there
+  grep -Fq "data/schema.sql" "${GH_CAPTURE_TARBALL}.list"
+
+  # Internal routes must NOT be in tarball
+  for page in "${internal_pages[@]}"; do
+    ! grep -Fq "server/app/${page}/" "${GH_CAPTURE_TARBALL}.list"
+    ! grep -Fq "static/chunks/app/${page}/" "${GH_CAPTURE_TARBALL}.list"
+  done
+  for api in "${internal_apis[@]}"; do
+    ! grep -Fq "server/app/api/${api}/" "${GH_CAPTURE_TARBALL}.list"
+    ! grep -Fq "static/chunks/app/api/${api}/" "${GH_CAPTURE_TARBALL}.list"
+  done
+
+  # Public routes SHOULD still be there
+  grep -Fq "server/app/usage/page.js" "${GH_CAPTURE_TARBALL}.list"
+  grep -Fq "static/chunks/app/usage/page.js" "${GH_CAPTURE_TARBALL}.list"
+}

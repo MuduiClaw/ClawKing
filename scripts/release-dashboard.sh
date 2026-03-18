@@ -64,6 +64,47 @@ info "Packaging standalone tarball..."
 cp -r .next/static "${STANDALONE_DIR}/.next/static" 2>/dev/null || true
 cp -r public "${STANDALONE_DIR}/public" 2>/dev/null || true
 
+# --- Sanitize: remove real data, ship empty schema only ---
+info "Sanitizing data directory..."
+rm -rf "${STANDALONE_DIR}/data"
+mkdir -p "${STANDALONE_DIR}/data"
+if [[ -f "${DASHBOARD_DIR}/lib/schema.sql" ]]; then
+  cp "${DASHBOARD_DIR}/lib/schema.sql" "${STANDALONE_DIR}/data/schema.sql"
+  success "Included empty schema.sql (no user data)"
+fi
+
+# --- Sanitize: strip internal-only route chunks (code should not ship) ---
+info "Stripping internal-only routes from starter build..."
+# Internal page routes (SSoT: lib/edition.ts INTERNAL_PAGE_PREFIXES)
+INTERNAL_PAGES=(content content-standards creative loop git design tech-stack)
+# Internal API routes (SSoT: lib/edition.ts INTERNAL_API_PREFIXES)
+INTERNAL_APIS=(content creative loop git)
+
+STRIPPED=0
+for page in "${INTERNAL_PAGES[@]}"; do
+  # Server-side route handlers
+  if [[ -d "${STANDALONE_DIR}/.next/server/app/${page}" ]]; then
+    rm -rf "${STANDALONE_DIR}/.next/server/app/${page}"
+    ((STRIPPED++)) || true
+  fi
+  # Client-side JS chunks
+  if [[ -d "${STANDALONE_DIR}/.next/static/chunks/app/${page}" ]]; then
+    rm -rf "${STANDALONE_DIR}/.next/static/chunks/app/${page}"
+    ((STRIPPED++)) || true
+  fi
+done
+for api in "${INTERNAL_APIS[@]}"; do
+  if [[ -d "${STANDALONE_DIR}/.next/server/app/api/${api}" ]]; then
+    rm -rf "${STANDALONE_DIR}/.next/server/app/api/${api}"
+    ((STRIPPED++)) || true
+  fi
+  if [[ -d "${STANDALONE_DIR}/.next/static/chunks/app/api/${api}" ]]; then
+    rm -rf "${STANDALONE_DIR}/.next/static/chunks/app/api/${api}"
+    ((STRIPPED++)) || true
+  fi
+done
+success "Stripped ${STRIPPED} internal route directories"
+
 # --- Copy native addons (Next.js standalone strips .node binaries) ---
 # better-sqlite3: required for /api/usage/history
 SQLITE_SRC="${DASHBOARD_DIR}/node_modules/better-sqlite3"
