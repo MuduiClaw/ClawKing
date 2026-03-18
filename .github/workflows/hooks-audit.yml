@@ -1,0 +1,133 @@
+# hooks-audit.yml — Async audit: verify commits weren't pushed with hooks bypassed
+# ALL logic MUST stay inline (Oracle R5: external scripts are unprotected by Rulesets)
+# Protected by Org-level Rulesets: .github/workflows/** requires PR (no direct push)
+name: Hooks Audit
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Audit commit trailers
+        run: |
+          set -euo pipefail
+          
+          # Whitelist for backup:/journal: prefix commits (must match S4 in prepare-commit-msg)
+          # Only these paths are allowed without a Pre-commit-gate trailer
+          is_whitelisted_path() {
+            local file="$1"
+            case "$file" in
+              memory/*|data/|data/*|.state/*|output/*|prompts/*) return 0 ;;
+            esac
+            # Root-level markdown files (no subdirectory)
+            if [[ "$file" != */* ]] && [[ "$file" == *.md ]]; then
+              return 0
+            fi
+            return 1
+          }
+          
+          FAILED=0
+          CHECKED=0
+          SKIPPED=0
+          
+          # Get push range: compare against previous commit on the branch
+          # For the initial commit, we check all commits
+          if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+            RANGE="${{ github.sha }}"
+            COMMITS=$(git rev-list "$RANGE")
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+            COMMITS=$(git rev-list "$RANGE" 2>/dev/null || echo "${{ github.sha }}")
+          fi
+          
+          for SHA in $COMMITS; do
+            CHECKED=$((CHECKED + 1))
+            MSG=$(git log -1 --format='%B' "$SHA")
+            SUBJECT=$(git log -1 --format='%s' "$SHA")
+            SHORT=$(echo "$SHA" | cut -c1-8)
+            
+            # Skip merge commits (2+ parents)
+            PARENT_COUNT=$(git rev-list --parents -n1 "$SHA" | wc -w)
+            PARENT_COUNT=$((PARENT_COUNT - 1))
+            if [[ $PARENT_COUNT -ge 2 ]]; then
+              echo "⏭️  $SHORT: merge commit — skipped"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+            
+            # Check if backup:/journal: prefix
+            IS_EXEMPT=0
+            case "$SUBJECT" in
+              backup:*|journal:*) IS_EXEMPT=1 ;;
+            esac
+            
+            # Extract trailer
+            TRAILER=$(echo "$MSG" | sed -n 's/^Pre-commit-gate: //p' | tail -1)
+            
+            if [[ $IS_EXEMPT -eq 1 ]]; then
+              # backup/journal commits: trailer optional, but paths must be whitelisted
+              FILES=$(git diff-tree --no-commit-id --name-only -r "$SHA" 2>/dev/null || true)
+              PATH_VIOLATION=0
+              VIOLATION_FILES=""
+              
+              while IFS= read -r f; do
+                [[ -z "$f" ]] && continue
+                if ! is_whitelisted_path "$f"; then
+                  PATH_VIOLATION=1
+                  VIOLATION_FILES="$VIOLATION_FILES\n    ❌ $f"
+                fi
+              done <<< "$FILES"
+              
+              if [[ $PATH_VIOLATION -eq 1 ]]; then
+                echo "❌ $SHORT: $SUBJECT"
+                echo "   backup/journal commit modifies non-whitelisted paths:"
+                echo -e "$VIOLATION_FILES"
+                echo "   Whitelist: memory/ data/ .state/ output/ prompts/ root *.md"
+                FAILED=$((FAILED + 1))
+              else
+                echo "✅ $SHORT: $SUBJECT (exempt — paths OK)"
+              fi
+            elif [[ -z "$TRAILER" ]]; then
+              # Normal commit without trailer = hooks bypassed
+              echo "❌ $SHORT: $SUBJECT"
+              echo "   Missing Pre-commit-gate trailer — hooks were bypassed"
+              FAILED=$((FAILED + 1))
+            elif [[ "$TRAILER" == "passed" ]]; then
+              # Legacy v1 trailer — reject
+              echo "❌ $SHORT: $SUBJECT"
+              echo "   Legacy 'passed' trailer — v2 requires tree-hash"
+              FAILED=$((FAILED + 1))
+            else
+              # Verify tree-hash matches
+              ACTUAL_TREE=$(git rev-parse "${SHA}^{tree}" 2>/dev/null || echo "")
+              if [[ "$TRAILER" != "$ACTUAL_TREE" ]]; then
+                echo "❌ $SHORT: $SUBJECT"
+                echo "   Tree-hash mismatch: trailer=${TRAILER:0:12}… actual=${ACTUAL_TREE:0:12}…"
+                FAILED=$((FAILED + 1))
+              else
+                echo "✅ $SHORT: $SUBJECT (tree: ${TRAILER:0:8})"
+              fi
+            fi
+          done
+          
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Checked: $CHECKED | Passed: $((CHECKED - FAILED - SKIPPED)) | Failed: $FAILED | Skipped: $SKIPPED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [[ $FAILED -gt 0 ]]; then
+            echo ""
+            echo "⛔ AUDIT FAILED: $FAILED commit(s) pushed without valid hooks"
+            echo "This means local git hooks were bypassed (--no-verify or hooks tampered)."
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All commits have valid hooks audit trail"

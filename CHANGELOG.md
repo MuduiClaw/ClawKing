@@ -21,6 +21,11 @@
 
 - Oracle R4 PASS — design system spec complete
 
+
+### 🔧 维护（自动记录）
+
+- remove design files (migrated to clawking-product)
+
 ---
 
 ## [1.4.1] - 2026-03-17
