@@ -26,6 +26,11 @@
 
 - remove design files (migrated to clawking-product)
 
+
+### 📖 文档（自动记录）
+
+- complete documentation overhaul T1-T12
+
 ---
 
 ## [1.4.1] - 2026-03-17
