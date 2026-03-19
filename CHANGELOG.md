@@ -23,6 +23,9 @@
 - 替换 5 个 img.mudui.me 外部图片链接为仓库本地图片
 - 修正 config 文件名和 Gemini CLI 包名
 - Oracle R1 — cut-release.sh hardening
+- setup.sh 部署 .githooks 到 workspace + 修正 openclaw-wrapper 路径
+- DOTFILES_DIR 统一引用 WORKSPACE_DIR（post-rsync 源）
+- 新增 verify-production.sh 生产环境验收脚本（Gate 8）
 
 ### 🔧 维护
 - 迁移 design 文件到 clawking-product
