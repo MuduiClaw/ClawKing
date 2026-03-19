@@ -25,9 +25,9 @@
 - 修正 config 文件名和 Gemini CLI 包名
 
 ### 🔧 维护
-
 - 迁移 design 文件到 clawking-product
 - CHANGELOG 自动记录脚本修复：同类条目合并到已有标题下，不再重复创建 `###` 段
+- add 7 bats tests for changelog merge + fix macOS sed compat
 
 ---
 
