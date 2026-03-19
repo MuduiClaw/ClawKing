@@ -71,4 +71,10 @@ scp <local-build>.tar.gz <device>:/tmp/
 - [2026-03-14] **lsof 清理端口残留时必须加 -sTCP:LISTEN** — 避免误杀客户端进程；清理 launchd 托管服务前应先 SIGKILL 同步状态。
 - [2026-03-16] **API 响应解析禁止使用脆弱的 grep/sed** — 应优先使用 python3 -c 或 jq 处理 JSON，并显式过滤 prerelease/draft 发布以确保下载稳定。
 - [2026-03-17] **升级 npm 包前必须先停止 Gateway 进程** — Gateway 占用 dist/ 文件锁会导致 npm 产生 ENOTEMPTY 错误（#15），清理端口需配合 lsof 精确匹配。
-- [2026-03-17] **Workspace 必须同步 docs/reference/templates/ 目录** — OpenClaw 3.12+ 的 cron session 强依赖此目录下的 AGENTS.md 模板，缺失会导致启动失败（#14）。
+- [2026-03-17] **Workspace 必须同步 docs/reference/templates/ 目录** — OpenClaw 3.12+ 的 cron session 强依赖 this 目录下的 AGENTS.md 模板，缺失会导致启动失败（#14）。
+- [2026-03-19] **发版 push 标签时禁止使用 `--tags`** — 避免将本地无关或过期的标签错误推送到远程，应显式推送特定版本标签。
+- [2026-03-19] **处理可能被 gitignore 的状态文件时使用 `|| true`** — 避免 `git add` 失败中断发版流程。
+- [2026-03-19] **非 root 权限检测服务监听建议用 `nc` 而非 `lsof`** — `nc -z` 不需要 root 权限即可检测端口，`lsof` 无法探测 root 进程。
+- [2026-03-19] **跨平台 `sed` 编辑禁止使用 `-i`** — macOS 和 Linux 行为不一致，建议采用 `sed ... > tmp && mv tmp` 模式。
+- [2026-03-19] **运维脚本需通过 `-t 0` 检测 TTY** — 避免在非交互模式（SSH/CI）下执行 `open` 等 GUI 操作导致脚本挂起。
+- [2026-03-19] **分发开源版本前必须强制清理数据目录和内部路由** — 防止泄露个人数据或未授权的内部代码。
