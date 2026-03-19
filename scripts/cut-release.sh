@@ -153,9 +153,9 @@ Promote [Unreleased] to [$VERSION_NUM] - $TODAY"
 
 git tag -a "$VERSION" -m "Release $VERSION"
 
-# 6. Push
+# 6. Push (push branch and only the new tag, not all tags)
 info "推送到 origin ($CURRENT_BRANCH)..."
-git push origin "$CURRENT_BRANCH" --tags 2>&1
+git push origin "$CURRENT_BRANCH" "$VERSION" 2>&1
 
 # 7. Verify push arrived
 if git log "origin/$CURRENT_BRANCH..HEAD" --oneline | grep -q .; then

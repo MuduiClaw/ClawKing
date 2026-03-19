@@ -199,3 +199,16 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"main"* ]]
 }
+
+@test "pushes only the new tag, not all local tags" {
+  cd "$REPO_DIR"
+
+  git clone --bare . "$TEST_DIR/remote-tag.git" 2>/dev/null
+  git remote add origin "$TEST_DIR/remote-tag.git"
+
+  REVIEWED=1 bash scripts/cut-release.sh v1.5.0 -y
+
+  # Verify only v1.5.0 exists on the remote (not the old v1.4.1)
+  cd "$TEST_DIR/remote-tag.git"
+  git tag -l v1.5.0 | grep -q 'v1.5.0'
+}
