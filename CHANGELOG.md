@@ -10,30 +10,24 @@
 ## [1.5.0] - 2026-03-19
 
 ### ✨ 新功能
-- design system + app shell — E2B Technical Brutalism
-- T5 Screen Design — 7 section components
 - add verify-production.sh for Gate 8 production verification
+- add cut-release.sh — one-command version release with tests
 
 ### 📖 文档
-
 - 文档体系补全：新增 7 篇文档（安装后指南、Workspace 详解、记忆系统、频道总览、Gemini CLI、自定义 Skill、日常运维）+ Agent 导航索引
 - SKILLS-GUIDE 修正 skill 数量 24→23，skill 创建教程迁移到独立文档
 - ARCHITECTURE 扩展文件系统说明、记忆架构、Gate 体系
 - README 文档导航表从 9 行扩展到 15 行
-- Oracle R4 PASS — design system spec complete
 
 ### 🐛 修复
-- 替换 5 个 img.mudui.me 外部图片链接为仓库本地图片
+- 替换外部图片链接为仓库本地图片
 - 修正 config 文件名和 Gemini CLI 包名
-- Oracle R1 — cut-release.sh hardening
 - setup.sh 部署 .githooks 到 workspace + 修正 openclaw-wrapper 路径
 - DOTFILES_DIR 统一引用 WORKSPACE_DIR（post-rsync 源）
-- 新增 verify-production.sh 生产环境验收脚本（Gate 8）
 - SSH detection works without sudo and skips GUI wait in non-interactive mode
-- use nc instead of lsof for SSH detection (Oracle review)
+- use nc instead of lsof for SSH detection
 
 ### 🔧 维护
-- 迁移 design 文件到 clawking-product
 - CHANGELOG 自动记录脚本修复：同类条目合并到已有标题下，不再重复创建 `###` 段
 - add 7 bats tests for changelog merge + fix macOS sed compat
 
