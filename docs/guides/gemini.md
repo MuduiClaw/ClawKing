@@ -39,7 +39,7 @@ Gemini 的独特优势：
 ### 第一步：安装 Gemini CLI
 
 ```bash
-npm install -g @anthropic-ai/gemini-cli
+npm install -g @google/gemini-cli
 ```
 
 > 如果安装报权限错误，参考 [排错指南](../TROUBLESHOOTING.md#npm-权限)。

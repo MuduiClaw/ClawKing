@@ -98,7 +98,7 @@ cp err.log "err.log.$(date +%Y%m%d)"
 | 内容 | 路径 | 重要性 |
 |------|------|--------|
 | Workspace 文件 | `~/clawd/` | ⭐⭐⭐ 最重要 |
-| OpenClaw 配置 | `~/.openclaw/config.json` | ⭐⭐⭐ |
+| OpenClaw 配置 | `~/.openclaw/openclaw.json` | ⭐⭐⭐ |
 | 记忆数据 | `~/clawd/memory/` | ⭐⭐ |
 | Session 数据 | `~/.openclaw/sessions/` | ⭐ 可选 |
 
@@ -141,7 +141,7 @@ rclone sync ~/clawd/ remote:your-bucket/clawd-backup/
 git clone <your-private-repo-url> ~/clawd
 
 # 恢复 OpenClaw 配置
-cp backup/config.json ~/.openclaw/config.json
+cp backup/openclaw.json ~/.openclaw/openclaw.json
 openclaw config validate
 ```
 
