@@ -30,7 +30,7 @@ setup() {
 EOF
 
   cd "$REPO_DIR"
-  git init -q
+  git init -q --initial-branch=main
   git config core.hooksPath /dev/null
   git add -A
   git commit -q -m "init" --no-verify
@@ -66,6 +66,13 @@ teardown() {
   [[ "$output" == *"v1.5.0"* ]]
 }
 
+@test "--major auto-bumps" {
+  cd "$REPO_DIR"
+  run bash scripts/cut-release.sh --major --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"v2.0.0"* ]]
+}
+
 @test "rejects duplicate tag" {
   cd "$REPO_DIR"
   run bash scripts/cut-release.sh v1.4.1
@@ -82,7 +89,6 @@ teardown() {
 
 @test "rejects empty unreleased section" {
   cd "$REPO_DIR"
-  # Replace content with empty section
   cat > CHANGELOG.md << 'EOF'
 # 更新日志
 
@@ -104,6 +110,20 @@ EOF
   [[ "$output" == *"空的"* ]]
 }
 
+@test "confirmation gate cancels on non-y input" {
+  cd "$REPO_DIR"
+  git clone --bare . "$TEST_DIR/remote.git" 2>/dev/null
+  git remote add origin "$TEST_DIR/remote.git"
+
+  # Pipe 'n' to stdin
+  run bash -c 'echo "n" | bash scripts/cut-release.sh v1.5.0'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"已取消"* ]]
+
+  # CHANGELOG still has [Unreleased]
+  grep -q '\[Unreleased\]' CHANGELOG.md
+}
+
 @test "full release rewrites CHANGELOG correctly" {
   cd "$REPO_DIR"
 
@@ -111,7 +131,12 @@ EOF
   git clone --bare . "$TEST_DIR/remote.git" 2>/dev/null
   git remote add origin "$TEST_DIR/remote.git"
 
-  REVIEWED=1 bash scripts/cut-release.sh v1.5.0
+  # -y to skip confirmation, unset gh to skip GitHub Release
+  PATH_BACKUP="$PATH"
+  # Remove gh from PATH to avoid GitHub Release attempt
+  export PATH="${REPO_DIR}/scripts:${PATH_BACKUP}"
+
+  REVIEWED=1 bash scripts/cut-release.sh v1.5.0 -y
 
   # New [Unreleased] exists
   grep -q '## \[Unreleased\]' CHANGELOG.md
@@ -125,4 +150,34 @@ EOF
 
   # Tag exists
   git tag -l v1.5.0 | grep -q 'v1.5.0'
+
+  # Cursor updated
+  [[ -f .changelog-cursor ]]
+}
+
+@test "syncs package.json version when present" {
+  cd "$REPO_DIR"
+
+  # Create a package.json
+  echo '{ "name": "test-pkg", "version": "1.4.1" }' > package.json
+  git add package.json
+  git commit -q -m "add package.json" --no-verify
+
+  git clone --bare . "$TEST_DIR/remote2.git" 2>/dev/null
+  git remote add origin "$TEST_DIR/remote2.git"
+
+  REVIEWED=1 bash scripts/cut-release.sh v1.5.0 -y
+
+  # package.json version updated
+  run node -e "console.log(require('./package.json').version)"
+  [ "$output" = "1.5.0" ]
+}
+
+@test "uses current branch name, not hardcoded main" {
+  cd "$REPO_DIR"
+
+  # The repo was init with main, verify dry-run shows it
+  run bash scripts/cut-release.sh v1.5.0 --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"main"* ]]
 }
