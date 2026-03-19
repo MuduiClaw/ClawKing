@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+
+## [1.5.0] - 2026-03-19
+
 ### ✨ 新功能
 - design system + app shell — E2B Technical Brutalism
 - T5 Screen Design — 7 section components
