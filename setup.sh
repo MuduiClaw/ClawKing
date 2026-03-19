@@ -884,20 +884,34 @@ fi
 # --- Enable macOS SSH (Remote Login) ---
 # macOS Ventura+ 锁死了命令行开启 SSH 的方式（需要 Full Disk Access），
 # 这里尝试自动方式，失败则自动打开设置页面引导用户点一下。
+# 非交互模式（远程 SSH 执行）跳过弹窗等待，直接打印提示。
 SSH_ENABLED=false
 
-# 检查是否已开启
-if sudo systemsetup -getremotelogin 2>/dev/null | grep -qi "on"; then
+# 检测是否有交互式终端（用于后续决定是否弹设置页面）
+HAS_TTY=false
+if [[ -t 0 ]]; then
+  HAS_TTY=true
+fi
+
+# 无 sudo 检测: 端口 22 是否在监听（最可靠，不需要权限）
+if lsof -iTCP:22 -sTCP:LISTEN -P 2>/dev/null | grep -q LISTEN; then
   SSH_ENABLED=true
 fi
 
-# Attempt 1: systemsetup (需要 Terminal 有 Full Disk Access)
-if ! $SSH_ENABLED; then
+# 有 sudo 时用 systemsetup 检测
+if ! $SSH_ENABLED && sudo -n true 2>/dev/null; then
+  if sudo systemsetup -getremotelogin 2>/dev/null | grep -qi "on"; then
+    SSH_ENABLED=true
+  fi
+fi
+
+# Attempt 1: systemsetup (需要 Terminal 有 Full Disk Access + sudo)
+if ! $SSH_ENABLED && sudo -n true 2>/dev/null; then
   sudo systemsetup -setremotelogin on 2>/dev/null && SSH_ENABLED=true
 fi
 
 # Attempt 2: launchctl load (部分 macOS 版本可用)
-if ! $SSH_ENABLED; then
+if ! $SSH_ENABLED && sudo -n true 2>/dev/null; then
   sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist 2>/dev/null || true
   sleep 1
   sudo launchctl list 2>/dev/null | grep -q "com.openssh.sshd" && SSH_ENABLED=true
@@ -905,15 +919,17 @@ fi
 
 if $SSH_ENABLED; then
   progress_done "SSH (Remote Login)"
+elif ! $HAS_TTY; then
+  # 非交互模式（远程 SSH / CI），无法弹 GUI，直接提示
+  warn "SSH 状态未知（非交互模式，无法检测）"
+  warn "如需 Tailscale 远程访问，请在本机打开：系统设置 → 通用 → 共享 → 远程登录"
 else
-  # 自动打开系统设置到共享页面
+  # 交互模式：打开系统设置引导用户手动开启
   echo ""
   warn "⚠️  macOS 限制：需要手动开启远程登录"
   echo ""
-  printf "   ${BOLD}正在打开系统设置...${NC}
-"
-  printf "   请在弹出的设置页面中找到 ${CYAN}远程登录 (Remote Login)${NC} 并打开
-"
+  printf "   ${BOLD}正在打开系统设置...${NC}\n"
+  printf "   请在弹出的设置页面中找到 ${CYAN}远程登录 (Remote Login)${NC} 并打开\n"
   echo ""
   # macOS Ventura+ 使用新的 URL scheme
   open "x-apple.systempreferences:com.apple.Sharing-Settings.extension" 2>/dev/null \
@@ -923,12 +939,12 @@ else
   printf "   等待开启中"
   SSH_WAIT=0
   while [[ $SSH_WAIT -lt 120 ]]; do
-    if sudo systemsetup -getremotelogin 2>/dev/null | grep -qi "on"; then
+    # 无 sudo 优先用端口检测
+    if lsof -iTCP:22 -sTCP:LISTEN -P 2>/dev/null | grep -q LISTEN; then
       SSH_ENABLED=true
       break
     fi
-    # 备选检测: 端口 22 是否在监听
-    if lsof -iTCP:22 -sTCP:LISTEN -P 2>/dev/null | grep -q LISTEN; then
+    if sudo -n true 2>/dev/null && sudo systemsetup -getremotelogin 2>/dev/null | grep -qi "on"; then
       SSH_ENABLED=true
       break
     fi

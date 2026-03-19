@@ -7,9 +7,9 @@
 ## [Unreleased]
 
 ### ✨ 新功能
-
 - design system + app shell — E2B Technical Brutalism
 - T5 Screen Design — 7 section components
+- add verify-production.sh for Gate 8 production verification
 
 ### 📖 文档
 
@@ -26,6 +26,7 @@
 - setup.sh 部署 .githooks 到 workspace + 修正 openclaw-wrapper 路径
 - DOTFILES_DIR 统一引用 WORKSPACE_DIR（post-rsync 源）
 - 新增 verify-production.sh 生产环境验收脚本（Gate 8）
+- SSH detection works without sudo and skips GUI wait in non-interactive mode
 
 ### 🔧 维护
 - 迁移 design 文件到 clawking-product
