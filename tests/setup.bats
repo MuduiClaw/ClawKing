@@ -115,6 +115,8 @@ assert_script_not_matches() {
   assert_script_not_contains 'rsync -a --delete'
   assert_script_contains 'USER_CONFIGS=('
   assert_script_contains 'if [ -f "$src" ] && [ ! -f "$dst" ]; then'
+  # Dotfiles block must use WORKSPACE_DIR (post-rsync) not SCRIPT_DIR
+  assert_script_contains 'DOTFILES_DIR="${WORKSPACE_DIR}/scripts/dotfiles"'
   assert_script_contains 'basename="$(basename "$example" .example)"'
 }
 

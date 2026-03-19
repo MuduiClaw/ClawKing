@@ -1069,7 +1069,8 @@ chmod +x "${OPENCLAW_STATE}/scripts/qmd-safe.sh"
 progress_done "qmd wrapper"
 
 # --- Dotfiles (non-destructive: only add if not present) ---
-DOTFILES_DIR="${SCRIPT_DIR}/scripts/dotfiles"
+# Use WORKSPACE_DIR (post-rsync) so dotfiles, wrapper, and hooks all reference the same source
+DOTFILES_DIR="${WORKSPACE_DIR}/scripts/dotfiles"
 if [ -d "$DOTFILES_DIR" ]; then
   # .editorconfig → workspace root
   if [ -f "${DOTFILES_DIR}/.editorconfig" ] && [ ! -f "${WORKSPACE_DIR}/.editorconfig" ]; then
