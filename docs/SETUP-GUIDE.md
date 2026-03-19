@@ -179,7 +179,7 @@ ssh user@<tailscale-ip>       # 远程连接
 | **用途** | 网页版聊天界面 |
 | **登录** | 粘贴 Gateway Token |
 
-![Control UI](https://img.mudui.me/docs/starter/a31203e8-94b5-4620-b82d-ff6db5a6898c-ed9b256c.png)
+![Control UI](images/control-ui.png)
 
 Token 忘了？
 ```bash
@@ -194,7 +194,7 @@ python3 -c "import json; c=json.load(open('$HOME/.openclaw/openclaw.json')); pri
 | **用途** | 服务状态、Settings 全量配置、工具版本、模型用量、Cron、Git Gates |
 | **登录** | 用带 `?token=xxx` 链接（自动登录）或密码 `0000` |
 
-![Dashboard](https://img.mudui.me/docs/starter/6f291f3e-7ccc-4e98-ab26-97f53906b95e-7dd435d8.png)
+![Dashboard](images/dashboard-overview.png)
 
 > 💡 把带 token 的链接保存为书签，以后直接进。
 

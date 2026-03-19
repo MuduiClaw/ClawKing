@@ -3,7 +3,7 @@
 > 19 层自动化质量门禁，覆盖从构思到部署的完整 Loop。
 > 每个门禁都是**物理执行**的——能阻断操作，不只是提示。
 
-![门禁 Dashboard — 按 Loop 阶段展示，含触发/拦截统计](https://img.mudui.me/docs/gates/gates-hero-16094b36.png)
+![门禁 Dashboard — 按 Loop 阶段展示，含触发/拦截统计](images/gates-hero.png)
 
 ## 为什么需要门禁？
 
@@ -154,7 +154,7 @@ bash scripts/spawn-agent.sh <project-dir>
 
 门禁与任务看板深度集成。任务生命周期：
 
-![任务看板 — Spec-Driven 状态流转](https://img.mudui.me/docs/tasks/tasks-hero-9890d2fe.png)
+![任务看板 — Spec-Driven 状态流转](images/tasks-hero.png)
 
 ```
 draft → Oracle 审查 → approved → in_progress → done

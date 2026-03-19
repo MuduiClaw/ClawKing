@@ -49,7 +49,7 @@ cd ClawKing
 
 ## 你会得到什么
 
-![Dashboard — 实时监控面板](https://img.mudui.me/docs/dashboard/dashboard-hero-87a89c11.png)
+![Dashboard — 实时监控面板](docs/images/dashboard-hero.png)
 
 **核心能力：**
 
