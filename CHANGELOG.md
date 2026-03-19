@@ -6,35 +6,28 @@
 
 ## [Unreleased]
 
-
-### ✨ 新功能（自动记录）
+### ✨ 新功能
 
 - design system + app shell — E2B Technical Brutalism
-
-
-### ✨ 新功能（自动记录）
-
 - T5 Screen Design — 7 section components
 
+### 📖 文档
 
-### 📖 文档（自动记录）
-
+- 文档体系补全：新增 7 篇文档（安装后指南、Workspace 详解、记忆系统、频道总览、Gemini CLI、自定义 Skill、日常运维）+ Agent 导航索引
+- SKILLS-GUIDE 修正 skill 数量 24→23，skill 创建教程迁移到独立文档
+- ARCHITECTURE 扩展文件系统说明、记忆架构、Gate 体系
+- README 文档导航表从 9 行扩展到 15 行
 - Oracle R4 PASS — design system spec complete
 
+### 🐛 修复
 
-### 🔧 维护（自动记录）
+- 替换 5 个 img.mudui.me 外部图片链接为仓库本地图片
+- 修正 config 文件名和 Gemini CLI 包名
 
-- remove design files (migrated to clawking-product)
+### 🔧 维护
 
-
-### 📖 文档（自动记录）
-
-- complete documentation overhaul T1-T12
-
-
-### 🐛 修复（自动记录）
-
-- correct config filename and gemini CLI package name
+- 迁移 design 文件到 clawking-product
+- CHANGELOG 自动记录脚本修复：同类条目合并到已有标题下，不再重复创建 `###` 段
 
 ---
 
@@ -73,6 +66,7 @@
 - **正式更名 ClawKing 🦞**：独立品牌，不再叫 openclaw-starter
 - **19 层质量门禁可移植**：门禁脚本不依赖特定机器，任何 ClawKing 安装都能用
 - **Gate 6 E2E 感知**：自动检测是否有 Playwright 测试覆盖
+- **Gate 7 截图去重**：阻止相同截图重复提交
 - **12 项行为测试 (bats)**：门禁行为在沙盒 git 仓库中真实执行验证
 - **ACP 认证引导**：安装时自动检查 ACP 配置，新手不会漏配
 - **基建审计工具**：`infra-audit.sh` 一键检查系统健康
@@ -96,31 +90,11 @@
 - 12 篇工具实战指南：从零开始手把手教你用每个工具
 - 三道防线说明：自愈 → Claude 急救 → GitHub 备份
 - 最佳模型搭配推荐
-
-
-### ✨ 新功能（自动记录）
-
-- screenshot dedup — block identical screenshots in spec delivery
-- add Gate 6 E2E awareness + 4 bats behavioral tests
-- add 12 behavioral hook tests (sandbox git repo execution)
-
-### 🐛 修复（自动记录）
-
-- Oracle R1 — Gate 6 vitest detection + Gate 7 simplify + deep-status bats test
-- Oracle audit — close 3 critical + 2 medium gate vulnerabilities
-- chmod +x sync-to-template.sh + sanitize private ref
-- remove redundant brew install + fix plist glob
-- CI shellcheck + macOS pinning + acceptance dir
-- repair all 15 bats failures + add CI
-
-### 📖 文档（自动记录）
-
-- 重写更新日志 — 全中文、用户友好、讲人话
 - AGENTS.md 自动教训沉淀
 
-### 🔧 维护（自动记录）
+### 🔧 维护
 
-- add 3 behavioral tests for screenshot verification gate
+- 3 个行为测试覆盖截图验证门禁
 
 ---
 

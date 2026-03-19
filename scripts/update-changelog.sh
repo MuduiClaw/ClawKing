@@ -73,6 +73,73 @@ is_dup() {
   [[ -n "$key" ]] && echo "$dev_section" | grep -qF -- "$key" 2>/dev/null
 }
 
+# --- Append a line under an existing ### header within [Unreleased]/[开发中] ---
+# Returns 0 (success) if header found and line appended, 1 otherwise.
+append_to_existing_header() {
+  local header="$1"
+  local body="$2"
+
+  # Check if header exists in the unreleased section
+  local in_unreleased
+  in_unreleased=$(awk '
+    /^## \[开发中\]/ || /^## \[Unreleased\]/ { in_dev=1; next }
+    in_dev && /^## / { exit }
+    in_dev && /^---$/ { exit }
+    in_dev { print }
+  ' "$CHANGELOG" 2>/dev/null)
+
+  # Match header with or without suffix like （自动记录）
+  local matched_hdr
+  matched_hdr=$(echo "$in_unreleased" | grep -m1 "^### $header" || true)
+  if [[ -z "$matched_hdr" ]]; then
+    return 1
+  fi
+
+  # Header exists — append the new bullet after the last item under that header
+  awk -v hdr="$matched_hdr" -v item="- $body" '
+    BEGIN { found=0; inserted=0 }
+    /^## \[开发中\]/ || /^## \[Unreleased\]/ { in_dev=1 }
+    in_dev && /^## [^[]/ { in_dev=0 }
+    in_dev && /^---$/ {
+      # If we found the header but hit --- before inserting, insert now
+      if (found && !inserted) { print item; print ""; inserted=1 }
+      in_dev=0
+    }
+    in_dev && $0 == hdr { found=1; in_hdr=1; print; next }
+    in_hdr && /^$/ {
+      # blank line after list items — skip (will re-add)
+      next
+    }
+    in_hdr && /^###/ {
+      # Next header — insert before it
+      if (!inserted) { print item; print ""; inserted=1 }
+      in_hdr=0
+      print; next
+    }
+    in_hdr && /^---$/ {
+      if (!inserted) { print item; print ""; inserted=1 }
+      in_hdr=0
+      print; next
+    }
+    in_hdr && /^- / {
+      # Print existing item, keep going
+      print; next
+    }
+    in_hdr {
+      # Non-list line in header section — insert before it
+      if (!inserted) { print item; print ""; inserted=1 }
+      in_hdr=0
+      print; next
+    }
+    { print }
+    END {
+      if (found && !inserted) { print item }
+    }
+  ' "$CHANGELOG" > "${CHANGELOG}.tmp"
+  mv "${CHANGELOG}.tmp" "$CHANGELOG"
+  return 0
+}
+
 # --- Insert block before --- or next ## after [开发中] ---
 insert_block() {
   local block_file="$1"
@@ -119,24 +186,30 @@ if [[ -n "$SINGLE_MSG" ]]; then
     exit 0  # Already recorded
   fi
 
-  # Map type to emoji header
+  # Map type to emoji header (no suffix — append to existing headers)
   case "$PARSED_TYPE" in
-    feat)                    header="✨ 新功能（自动记录）" ;;
-    fix|revert)              header="🐛 修复（自动记录）" ;;
-    docs)                    header="📖 文档（自动记录）" ;;
-    test|chore|ci|refactor)  header="🔧 维护（自动记录）" ;;
+    feat)                    header="✨ 新功能" ;;
+    fix|revert)              header="🐛 修复" ;;
+    docs)                    header="📖 文档" ;;
+    test|chore|ci|refactor)  header="🔧 维护" ;;
     *)                       exit 0 ;;
   esac
 
-  block_file="${CHANGELOG}.blk"
-  printf '\n### %s\n\n- %s\n' "$header" "$PARSED_BODY" > "$block_file"
-
   if $DRY_RUN; then
-    info "[dry-run] 将追加: $PARSED_BODY"
-    rm -f "$block_file"
+    info "[dry-run] 将追加: [$header] $PARSED_BODY"
     exit 0
   fi
 
+  # Try to append under existing matching header within [Unreleased]/[开发中]
+  if append_to_existing_header "$header" "$PARSED_BODY"; then
+    git add "$CHANGELOG" 2>/dev/null || true
+    success "已记录: $PARSED_BODY"
+    exit 0
+  fi
+
+  # No matching header yet — insert new block
+  block_file="${CHANGELOG}.blk"
+  printf '\n### %s\n\n- %s\n' "$header" "$PARSED_BODY" > "$block_file"
   insert_block "$block_file"
   rm -f "$block_file"
   git add "$CHANGELOG" 2>/dev/null || true
@@ -183,10 +256,10 @@ info "发现 $count 条新提交"
 
 # Build block
 block=""
-[[ -n "$feat" ]]  && block+=$'\n'"### ✨ 新功能（自动记录）"$'\n\n'"$feat"
-[[ -n "$fix" ]]   && block+=$'\n'"### 🐛 修复（自动记录）"$'\n\n'"$fix"
-[[ -n "$docs" ]]  && block+=$'\n'"### 📖 文档（自动记录）"$'\n\n'"$docs"
-[[ -n "$maint" ]] && block+=$'\n'"### 🔧 维护（自动记录）"$'\n\n'"$maint"
+[[ -n "$feat" ]]  && block+=$'\n'"### ✨ 新功能"$'\n\n'"$feat"
+[[ -n "$fix" ]]   && block+=$'\n'"### 🐛 修复"$'\n\n'"$fix"
+[[ -n "$docs" ]]  && block+=$'\n'"### 📖 文档"$'\n\n'"$docs"
+[[ -n "$maint" ]] && block+=$'\n'"### 🔧 维护"$'\n\n'"$maint"
 
 if [[ -z "$block" ]]; then
   info "所有条目已存在"
