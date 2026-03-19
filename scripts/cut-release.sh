@@ -144,7 +144,9 @@ if [[ -f "$REPO_ROOT/package.json" ]]; then
 fi
 
 # 5. Commit + tag
-git add "$CHANGELOG" .changelog-cursor
+git add "$CHANGELOG"
+# Also add cursor if tracked (may be gitignored)
+git add .changelog-cursor 2>/dev/null || true
 REVIEWED=1 git commit -m "chore: release $VERSION
 
 Promote [Unreleased] to [$VERSION_NUM] - $TODAY"

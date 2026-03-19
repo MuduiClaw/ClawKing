@@ -173,6 +173,24 @@ EOF
   [ "$output" = "1.5.0" ]
 }
 
+@test "works when .changelog-cursor is gitignored" {
+  cd "$REPO_DIR"
+
+  # Add .changelog-cursor to gitignore
+  echo '.changelog-cursor' >> .gitignore
+  git add .gitignore
+  git commit -q -m "gitignore cursor" --no-verify
+
+  git clone --bare . "$TEST_DIR/remote-ign.git" 2>/dev/null
+  git remote add origin "$TEST_DIR/remote-ign.git"
+
+  REVIEWED=1 bash scripts/cut-release.sh v1.5.0 -y
+
+  # Release still succeeds
+  grep -q '## \[1.5.0\]' CHANGELOG.md
+  git tag -l v1.5.0 | grep -q 'v1.5.0'
+}
+
 @test "uses current branch name, not hardcoded main" {
   cd "$REPO_DIR"
 
