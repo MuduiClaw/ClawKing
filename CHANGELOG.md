@@ -27,6 +27,7 @@
 - DOTFILES_DIR 统一引用 WORKSPACE_DIR（post-rsync 源）
 - 新增 verify-production.sh 生产环境验收脚本（Gate 8）
 - SSH detection works without sudo and skips GUI wait in non-interactive mode
+- use nc instead of lsof for SSH detection (Oracle review)
 
 ### 🔧 维护
 - 迁移 design 文件到 clawking-product

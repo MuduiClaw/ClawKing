@@ -26,3 +26,4 @@ dist/
 node_modules/
 openclaw.json
 tasks/docs-overhaul.md
+.task-lock/
