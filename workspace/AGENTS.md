@@ -20,6 +20,7 @@
 - **搜索先行**：debug/排查/新功能前先搜（`web_search` + `memory_search` + 仓库 grep）。
 - **Spec 先行**：所有任务动手前先产出 spec。小任务 5 行（目标/改什么/怎么验/不做什么/影响），≥3 步写 `tasks/<slug>.md`，走 Oracle review → 用户审批 → approved。免 spec 仅限单步小修。
 - **上下文预算**：单次注入 8k~12k tokens，超大文件只读相关片段。
+- **文档导航**：不确定 ClawKing 功能时，先读 `docs/INDEX.md` 定位对应文档。
 - **复杂变更**：先评估爆炸半径（改了什么 / 谁受影响 / 回滚方案 / 验证方式）。
 
 ### ② 执行（Execute）

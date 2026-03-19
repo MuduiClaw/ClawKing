@@ -25,3 +25,4 @@ __pycache__/
 dist/
 node_modules/
 openclaw.json
+tasks/docs-overhaul.md

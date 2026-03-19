@@ -31,7 +31,7 @@ my-skill/
 ls ~/.nvm/versions/node/*/lib/node_modules/openclaw/skills/
 ```
 
-### 2. 自定义 Skills（24 个）
+### 2. 自定义 Skills（23 个）
 ClawKing 包含的 battle-tested skills：
 
 | Skill | 用途 |
@@ -51,7 +51,6 @@ ClawKing 包含的 battle-tested skills：
 | **gpt-researcher** | 深度研究 |
 | **kb-rag** | 知识库 RAG |
 | **find-skills** | 发现新 skills |
-| **login-machine** | 浏览器自动登录 |
 | **mcp-builder** | MCP server 开发 |
 | **discord-ops** | Discord 运维 |
 | **agent-guides** | Agent 能力文档 |
@@ -79,58 +78,7 @@ clawhub update skill-name
 
 ## 创建自己的 Skill
 
-### 最简 Skill
-
-```bash
-mkdir -p ~/clawd/skills/my-skill
-cat > ~/clawd/skills/my-skill/SKILL.md << 'EOF'
-# My Skill
-
-当用户要求 [触发条件] 时，执行以下步骤：
-
-1. [步骤 1]
-2. [步骤 2]
-3. [步骤 3]
-
-## 规则
-- [规则 1]
-- [规则 2]
-EOF
-```
-
-就这样。AI 下次匹配到对应描述时会自动加载这个 skill。
-
-### 进阶结构
-
-```
-advanced-skill/
-├── SKILL.md              # AI 行为指令
-├── references/
-│   ├── api-docs.md       # API 参考（AI 按需读取）
-│   └── examples.md       # 示例
-├── scripts/
-│   ├── main.py           # 执行脚本
-│   └── utils.py
-├── run.sh                # uv/venv 入口
-├── pyproject.toml        # Python 依赖
-└── templates/
-    └── output.md         # 输出模板
-```
-
-### SKILL.md 最佳实践
-
-1. **清晰的触发描述** — `description` 字段决定 AI 什么时候选择这个 skill
-2. **具体的步骤** — 不要含糊，写清楚每一步
-3. **包含规则/约束** — 什么不该做和什么该做同样重要
-4. **引用相对路径** — 用 `references/xxx.md` 引用文档，AI 会按需读取
-5. **控制 context 大小** — SKILL.md 本身尽量精简，详细文档放 references/
-
-### Skill 注册
-
-Skills 放在以下位置自动被发现：
-- `~/clawd/skills/` — workspace skills（自定义）
-- OpenClaw 安装目录的 `skills/` — 内置 skills
-- `~/.agents/skills/` — 用户全局 skills
+想写自己的 Skill？👉 **[自定义 Skill 开发指南](CUSTOM-SKILLS.md)** — 从零开始的完整教程，包含目录结构、SKILL.md 格式规范、测试方法和 ClawHub 发布流程。
 
 ## 常用操作
 

@@ -245,15 +245,21 @@ ClawKing/
 
 | 文档 | 内容 |
 |------|------|
+| **[🚀 安装后第一步](docs/GETTING-STARTED.md)** | 装完后的前 10 分钟路线图 |
 | **[配置指南](docs/SETUP-GUIDE.md)** | LLM、频道、搜索、语音、Tailscale 详细配置 |
-| **[工具深度指南](docs/guides/README.md)** | 12 篇实战指南：Codex、Claude Code、Discord、1Password、MCP 等 |
-| **[FAQ](docs/FAQ.md)** | 常见问题、排错、升级 |
-| **[架构](docs/ARCHITECTURE.md)** | 系统架构详解 |
+| **[Workspace 文件详解](docs/WORKSPACE.md)** | SOUL/IDENTITY/USER/AGENTS 等 8 个核心文件说明 |
+| **[记忆系统](docs/MEMORY.md)** | 记忆架构、qmd 语义搜索、记忆管理 |
+| **[工具深度指南](docs/guides/README.md)** | 14 篇实战指南：Codex、Claude Code、Gemini、Discord、频道总览等 |
+| **[Skills](docs/SKILLS-GUIDE.md)** | 三层 Skills 体系和内置 skill 列表 |
+| **[自定义 Skill](docs/CUSTOM-SKILLS.md)** | 从零写一个 Skill 的完整教程 |
 | **[Cron Fleet](docs/CRON-FLEET.md)** | 定时任务使用指南 |
 | **[门禁系统](docs/GATES.md)** | 19 层自动化质量门禁 |
-| **[Skills](docs/SKILLS-GUIDE.md)** | Skills 扩展指南 |
+| **[日常运维](docs/OPS.md)** | 日志、备份、存储清理、监控 |
+| **[架构](docs/ARCHITECTURE.md)** | 系统架构详解 |
 | **[升级](docs/UPGRADE.md)** | 三层升级：OpenClaw / Dashboard / ClawKing |
 | **[排错](docs/TROUBLESHOOTING.md)** | 问题诊断与解决 |
+| **[FAQ](docs/FAQ.md)** | 常见问题问答 |
+| **[📋 文档索引](docs/INDEX.md)** | Agent 导航：一个文件定位所有文档 |
 
 ### 外部链接
 

@@ -102,30 +102,85 @@ macOS 后台服务，确保关键进程常驻：
 
 ## 文件系统
 
+Workspace 文件分为两类：**用户自定义**（升级不覆盖）和**系统核心**（升级时覆盖+备份）。
+
 ```
 ~/clawd/                    ← Workspace (AI 的工作目录)
+│
+│ ── 用户自定义（升级永不覆盖）──
+├── SOUL.md                 ← AI 人格定义
+├── IDENTITY.md             ← AI 身份与自我认知
+├── USER.md                 ← 用户画像与偏好
 ├── AGENTS.md               ← 行为规则 (The Loop)
-├── SOUL.md                 ← AI 人格
-├── IDENTITY.md             ← AI 身份
-├── USER.md                 ← 用户画像
-├── TOOLS.md                ← 工具索引
-├── MEMORY.md               ← 核心记忆
-├── HEARTBEAT.md            ← 心跳行为
-├── memory/                 ← 记忆存储
+├── TOOLS.md                ← 工具索引与安全红线
+├── MEMORY.md               ← 核心记忆索引
+├── HEARTBEAT.md            ← 心跳协议
+├── BOOTSTRAP.md            ← 启动任务
+│
+│ ── 记忆系统 ──
+├── memory/
+│   ├── archive/            ← 按主题的知识归档
+│   │   ├── infrastructure.md
+│   │   ├── projects.md
+│   │   ├── lessons.md
+│   │   └── decisions.md
+│   └── journal/            ← 每日自动日记
+│       └── YYYY-MM-DD.md
+│
+│ ── 系统核心（升级时覆盖 + .bak 备份）──
 ├── skills/                 ← 自定义 skills
 ├── scripts/                ← 自动化脚本
 ├── prompts/                ← Cron prompt 模板
 └── tasks/                  ← 任务 spec
 
 ~/.openclaw/                ← State (运行状态)
-├── openclaw.json           ← 配置文件
-├── logs/                   ← 日志
+├── openclaw.json           ← 配置文件（用 config.patch 修改）
+├── logs/
+│   ├── err.log             ← Gateway 错误日志
+│   ├── access.log          ← API 请求日志
+│   └── guardian.log        ← Guardian 恢复日志
 ├── scripts/                ← 服务脚本
 └── sessions/               ← Session 数据
 
 ~/Library/LaunchAgents/     ← macOS 服务
 └── ai.openclaw.*.plist
 ```
+
+> 📖 每个 workspace 文件的详细说明见 [Workspace 文件详解](WORKSPACE.md)。
+
+### 记忆架构
+
+AI 的记忆是三层结构，信息密度递减：
+
+```
+MEMORY.md（索引层）──→ AI 每次对话必读，精简到一行一条
+    │
+    ├─→ memory/archive/（归档层）──→ 详细信息，按需用 memory_search 检索
+    │
+    └─→ memory/journal/（日记层）──→ 每日自动生成，记录当天工作
+         │
+         └─→ qmd（语义搜索）──→ 向量嵌入，支持自然语言查询
+```
+
+> 📖 详细的记忆系统使用方法见 [记忆系统指南](MEMORY.md)。
+
+### Gate 体系
+
+代码提交通过 `git push` 触发 pre-push hook，自动执行 9 道质量门禁：
+
+| Gate | 检查项 | 说明 |
+|------|--------|------|
+| 1 | Conventional Commits | 提交消息格式校验 |
+| 2 | Spec 引用 | 变更须关联 task spec |
+| 3 | Tree-hash 防伪 | 验证提交完整性 |
+| 4 | TDD | 测试覆盖检查 |
+| 5 | Typecheck | 类型检查（如适用） |
+| 6 | E2E | 端到端测试 |
+| 7 | UI 验收截图 | 动态 UI 验收（截图+视觉去重） |
+| 8 | Scope-ack | 变更范围确认 |
+| 9 | CDP 浏览器验证 | 自动浏览器验收 |
+
+> 📖 详细的 Gate 配置见 [GATES.md](GATES.md)。
 
 ## 端口
 
