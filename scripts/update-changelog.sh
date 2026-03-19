@@ -42,7 +42,11 @@ cc_re='^(feat|fix|docs|test|chore|ci|revert|refactor)(\([^)]+\))?:[[:space:]]*(.
 # --- Parse a single commit message into type+body, returns 1 if not parseable ---
 parse_msg() {
   local msg="$1"
-  # Clean noise
+
+  # Skip commits tagged as private/internal — never enter public changelog
+  [[ "$msg" == *"[private]"* || "$msg" == *"[internal]"* ]] && return 1
+
+  # Clean noise tags
   msg=$(echo "$msg" | sed -E 's/\[scope-ack\]//g; s/\[spec:[^]]*\]//g; s/[[:space:]]+/ /g; s/ $//')
 
   if [[ "$msg" =~ $cc_re ]]; then
@@ -55,6 +59,7 @@ parse_msg() {
   # Skip noise
   [[ "$PARSED_BODY" =~ ^[Mm]erge ]] && return 1
   [[ "$PARSED_BODY" =~ ^release ]] && return 1
+  [[ "$PARSED_BODY" =~ ^[Rr]elease\ v ]] && return 1
   return 0
 }
 

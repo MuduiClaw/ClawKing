@@ -114,3 +114,33 @@ teardown() {
   # Should NOT contain （自动记录）
   ! grep -q '自动记录' CHANGELOG.md
 }
+
+@test "[private] tagged commit is excluded from changelog" {
+  cd "$REPO_DIR"
+  local before after
+  before=$(cat CHANGELOG.md)
+  bash scripts/update-changelog.sh --msg "feat: secret feature [private]"
+  after=$(cat CHANGELOG.md)
+
+  [ "$before" = "$after" ]
+}
+
+@test "[internal] tagged commit is excluded from changelog" {
+  cd "$REPO_DIR"
+  local before after
+  before=$(cat CHANGELOG.md)
+  bash scripts/update-changelog.sh --msg "feat: internal design system [internal]"
+  after=$(cat CHANGELOG.md)
+
+  [ "$before" = "$after" ]
+}
+
+@test "release commit is excluded from changelog" {
+  cd "$REPO_DIR"
+  local before after
+  before=$(cat CHANGELOG.md)
+  bash scripts/update-changelog.sh --msg "chore: release v1.5.0"
+  after=$(cat CHANGELOG.md)
+
+  [ "$before" = "$after" ]
+}
