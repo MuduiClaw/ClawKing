@@ -15,6 +15,20 @@ ClawKing 🦞：把 battle-tested 的 OpenClaw 全套能力打包成可分发的
 - **sync-to-template.sh**：维护者同步工具，白名单机制，只同步通用文件
 - **独立版本**：自己的 VERSION + CHANGELOG，不跟 clawd 版本号
 
+### 局域网设备更新规则
+对局域网内所有设备的更新，**必须走开源项目流程**，用于验证项目安装/升级链路的健壮性：
+```bash
+# ✅ 正确：git pull + setup.sh
+ssh <device> "cd ~/openclaw-starter && git pull && ./setup.sh --update-dashboard"
+
+# ❌ 禁止：从开发机直接推文件
+rsync ~/projects/infra-dashboard/ <device>:~/projects/infra-dashboard/
+scp <local-build>.tar.gz <device>:/tmp/
+```
+- 目的：每次更新都是对开源项目发布流程的真实 E2E 验证
+- 覆盖范围：OpenClaw 升级、infra-dashboard 升级、workspace 文件同步
+- 唯一例外：紧急 hotfix 可临时绕过，但事后必须补发 release 并重新走流程验证
+
 ### setup.sh 原则
 - **幂等**：重跑不破坏已有配置
 - **用户配置区不覆盖**：SOUL.md, IDENTITY.md, USER.md, TOOLS.md, MEMORY.md

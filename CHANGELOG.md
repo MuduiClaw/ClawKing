@@ -20,9 +20,9 @@
 - Oracle R4 PASS — design system spec complete
 
 ### 🐛 修复
-
 - 替换 5 个 img.mudui.me 外部图片链接为仓库本地图片
 - 修正 config 文件名和 Gemini CLI 包名
+- Oracle R1 — cut-release.sh hardening
 
 ### 🔧 维护
 - 迁移 design 文件到 clawking-product
