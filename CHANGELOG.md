@@ -31,6 +31,11 @@
 
 - complete documentation overhaul T1-T12
 
+
+### 🐛 修复（自动记录）
+
+- correct config filename and gemini CLI package name
+
 ---
 
 ## [1.4.1] - 2026-03-17

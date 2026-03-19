@@ -68,7 +68,7 @@ $ tailscale status
 
 ```bash
 $ tailscale ip -4
-# 输出类似 100.86.78.124
+# 输出类似 100.x.y.z
 ```
 
 然后让 Gateway 监听这个 IP：
@@ -76,12 +76,12 @@ $ tailscale ip -4
 ```bash
 $ openclaw gateway config.patch '{
   "gateway": {
-    "bind": "100.86.78.124"
+    "bind": "100.x.y.z"
   }
 }'
 ```
 
-把 `100.86.78.124` 替换成你实际的 Tailscale IP。
+把 `100.x.y.z` 替换成你实际的 Tailscale IP。
 
 ⚠️ **安全警告：不要用 `0.0.0.0`！** `0.0.0.0` 表示监听所有网络接口，包括公网 IP。如果你的机器有公网 IP 且没有防火墙，Gateway 会直接暴露在互联网上。只绑定 Tailscale IP（`100.x.y.z`），确保只有你的 Tailscale 网络内的设备能访问。
 
@@ -90,8 +90,8 @@ $ openclaw gateway config.patch '{
 在另一台设备（已装 Tailscale 并登录）上：
 
 ```bash
-# 假设 Gateway 机器的 Tailscale IP 是 100.86.78.124
-$ curl http://100.86.78.124:18789/health
+# 假设 Gateway 机器的 Tailscale IP 是 100.x.y.z
+$ curl http://100.x.y.z:18789/health
 ```
 
 看到 `ok` 就通了。
