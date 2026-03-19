@@ -61,7 +61,7 @@ parse_msg() {
 # --- Read existing [开发中] section only (not full file) for dedup ---
 read_dev_section() {
   if [[ -f "$CHANGELOG" ]]; then
-    sed -n '/^## \[开发中\]\|^## \[Unreleased\]/,/^---$\|^## v/{/^##\|^---/d; p;}' "$CHANGELOG" 2>/dev/null || echo ""
+    sed -nE '/^## \[(开发中|Unreleased)\]/,/^(---|## v)/{/^(##|---)/d; p;}' "$CHANGELOG" 2>/dev/null || echo ""
   fi
 }
 
@@ -144,7 +144,7 @@ append_to_existing_header() {
 insert_block() {
   local block_file="$1"
 
-  if ! grep -q '^## \[开发中\]\|^## \[Unreleased\]' "$CHANGELOG" 2>/dev/null; then
+  if ! grep -qE '^## \[(开发中|Unreleased)\]' "$CHANGELOG" 2>/dev/null; then
     # No section — create at top
     local tmp="${CHANGELOG}.tmp"
     { echo "## [开发中]"; echo ""; cat "$block_file"; echo ""; echo "---"; echo ""; cat "$CHANGELOG"; } > "$tmp"
