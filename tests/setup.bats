@@ -109,7 +109,7 @@ assert_script_not_matches() {
 }
 
 @test "setup.sh protects user files during workspace deployment" {
-  assert_script_contains 'SYSTEM_DIRS=("scripts" "prompts" "eval" "skills" "mcp-bridge")'
+  assert_script_contains 'SYSTEM_DIRS=("scripts" "prompts" "eval" "skills" "mcp-bridge" ".githooks")'
   assert_script_contains 'cp -a "$dst" "$backup"'
   assert_script_contains 'rsync -a "$src/" "$dst/"'
   assert_script_not_contains 'rsync -a --delete'

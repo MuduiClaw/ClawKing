@@ -983,7 +983,7 @@ mkdir -p "${HOME}/projects"
 
 # --- Zone-based file deployment ---
 # System core zone: always overwrite (with backup)
-SYSTEM_DIRS=("scripts" "prompts" "eval" "skills" "mcp-bridge")
+SYSTEM_DIRS=("scripts" "prompts" "eval" "skills" "mcp-bridge" ".githooks")
 DATE_STAMP=$(date +%Y%m%d)
 
 for dir in "${SYSTEM_DIRS[@]}"; do
@@ -1093,7 +1093,7 @@ if [ -d "$DOTFILES_DIR" ]; then
   fi
 
   # OpenClaw CLI wrapper (self-destruct protection + config preflight)
-  WRAPPER_SRC="${SCRIPT_DIR}/scripts/dotfiles/openclaw-wrapper"
+  WRAPPER_SRC="${WORKSPACE_DIR}/scripts/dotfiles/openclaw-wrapper"
   WRAPPER_DST="${HOME}/.local/bin/openclaw"
   if [ -f "$WRAPPER_SRC" ]; then
     mkdir -p "${HOME}/.local/bin"
