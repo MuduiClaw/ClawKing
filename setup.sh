@@ -893,8 +893,8 @@ if [[ -t 0 ]]; then
   HAS_TTY=true
 fi
 
-# 无 sudo 检测: 端口 22 是否在监听（最可靠，不需要权限）
-if lsof -iTCP:22 -sTCP:LISTEN -P 2>/dev/null | grep -q LISTEN; then
+# 无 sudo 检测: 端口 22 是否可连接（nc 不需要 root 权限，lsof 看不到 root 进程）
+if nc -z localhost 22 2>/dev/null; then
   SSH_ENABLED=true
 fi
 
@@ -939,8 +939,8 @@ else
   printf "   等待开启中"
   SSH_WAIT=0
   while [[ $SSH_WAIT -lt 120 ]]; do
-    # 无 sudo 优先用端口检测
-    if lsof -iTCP:22 -sTCP:LISTEN -P 2>/dev/null | grep -q LISTEN; then
+    # 无 sudo 优先用端口检测（nc 不需要 root 权限）
+    if nc -z localhost 22 2>/dev/null; then
       SSH_ENABLED=true
       break
     fi

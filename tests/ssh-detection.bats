@@ -6,14 +6,21 @@ setup() {
   SETUP="$BATS_TEST_DIRNAME/../setup.sh"
 }
 
-@test "setup.sh uses lsof port-22 check before sudo-based detection" {
-  # lsof check should appear before sudo systemsetup check
-  local lsof_line sudo_line
-  lsof_line=$(grep -n 'lsof -iTCP:22' "$SETUP" | head -1 | cut -d: -f1)
+@test "setup.sh uses nc port-22 check before sudo-based detection" {
+  # nc check should appear before sudo systemsetup check
+  local nc_line sudo_line
+  nc_line=$(grep -n 'nc -z localhost 22' "$SETUP" | head -1 | cut -d: -f1)
   sudo_line=$(grep -n 'sudo -n true.*systemsetup.*getremotelogin' "$SETUP" | head -1 | cut -d: -f1)
-  [[ -n "$lsof_line" ]]
+  [[ -n "$nc_line" ]]
   [[ -n "$sudo_line" ]]
-  [[ "$lsof_line" -lt "$sudo_line" ]]
+  [[ "$nc_line" -lt "$sudo_line" ]]
+}
+
+@test "setup.sh does not use lsof for SSH detection (requires root)" {
+  # lsof can't see root-owned sshd without sudo — must use nc instead
+  local ssh_section
+  ssh_section=$(sed -n '/Enable macOS SSH/,/Persist PATH/p' "$SETUP")
+  ! echo "$ssh_section" | grep -q 'lsof.*22'
 }
 
 @test "setup.sh guards sudo blocks with sudo -n true check" {
