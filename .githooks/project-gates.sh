@@ -1,37 +1,14 @@
 #!/usr/bin/env bash
-# Project-specific gates for ClawKing
+# Project-specific gates for ClawKing (open source)
 # Sourced by ~/clawd/.githooks/prepare-commit-msg after global gates
 # Available vars: $COMMIT_MSG_FILE, $COMMIT_MSG_LINE, $STAGED_FILES, $STAGED_COUNT
-set -euo pipefail
+# NOTE: Secrets scan moved to global Gate 0.4 (2026-03-24)
 
 repo_root="$(git rev-parse --show-toplevel)"
 
 # ============================================================
-# Gate P1: Secrets scan — zero tolerance for real credentials
-# ============================================================
-secret_hits=0
-for f in $STAGED_FILES; do
-  [[ -z "$f" ]] && continue
-  # Skip binary/lock files
-  case "$f" in
-    *.png|*.jpg|*.gif|*.ico|*.woff*|*.ttf|*.eot|*.lock|*.sum) continue ;;
-  esac
-  [[ -f "$repo_root/$f" ]] || continue
-  if grep -qE '(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36}|xoxb-[0-9]{10,}|AIza[a-zA-Z0-9_-]{35})' "$repo_root/$f" 2>/dev/null; then
-    echo "  ❌ [P1 Secrets] Real credential detected in: $f"
-    secret_hits=$((secret_hits + 1))
-  fi
-done
-
-if [[ $secret_hits -gt 0 ]]; then
-  echo ""
-  echo "⛔ COMMIT BLOCKED — $secret_hits file(s) contain real API keys/tokens"
-  echo "  Use placeholder format: __YOUR_xxx__ (see AGENTS.md 安全红线)"
-  exit 1
-fi
-
-# ============================================================
 # Gate P2: No private references — block personal paths/names
+# (ClawKing is open source — no personal references allowed)
 # ============================================================
 private_hits=0
 for f in $STAGED_FILES; do
@@ -55,4 +32,4 @@ if [[ $private_hits -gt 0 ]]; then
   exit 1
 fi
 
-echo "  ✅ Project gates: secrets clean, no private refs"
+echo "  ✅ Project gates: no private refs"

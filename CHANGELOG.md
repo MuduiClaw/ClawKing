@@ -31,6 +31,11 @@
 - CHANGELOG 自动记录脚本修复：同类条目合并到已有标题下，不再重复创建 `###` 段
 - add 7 bats tests for changelog merge + fix macOS sed compat
 
+
+### 📖 文档
+
+- AGENTS.md 自动教训沉淀
+
 ---
 
 ## [1.4.1] - 2026-03-17
