@@ -800,32 +800,30 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
   fi
   if command -v tailscale &>/dev/null; then
     # Start Tailscale daemon — prefer brew services, fallback to system daemon.
-    # Homebrew tailscale socket may be at /var/run/tailscaled.socket OR
-    # the daemon may be reachable without a socket file (newer versions).
-    TS_SOCKET="/var/run/tailscaled.socket"
+    # IMPORTANT: `tailscale status` returns non-zero when not logged in,
+    # so we use `pgrep tailscaled` to detect daemon readiness.
     TS_DAEMON_OK=false
+
+    # Helper: check if tailscaled process is running
+    _ts_daemon_running() {
+      pgrep -qf tailscaled 2>/dev/null
+    }
 
     # Attempt 1: brew services (most common on macOS)
     brew services start tailscale 2>/dev/null || true
-    # Check daemon readiness: socket file OR `tailscale status` responds
-    for _ in 1 2 3 4 5 6 7 8; do
-      if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
-        TS_DAEMON_OK=true; break
-      fi
+    for _ in $(seq 1 10); do
+      if _ts_daemon_running; then TS_DAEMON_OK=true; break; fi
       sleep 1
     done
 
-    # Attempt 2: explicit system daemon (only if brew services truly failed)
+    # Attempt 2: system daemon (only if brew services truly failed)
     if ! $TS_DAEMON_OK; then
-      # Stop brew service first to avoid conflicts
       brew services stop tailscale 2>/dev/null || true
       sleep 1
       info "Tailscale daemon not running, installing system daemon..."
       sudo tailscaled install-system-daemon 2>/dev/null || true
-      for _ in 1 2 3 4 5 6 7 8; do
-        if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
-          TS_DAEMON_OK=true; break
-        fi
+      for _ in $(seq 1 10); do
+        if _ts_daemon_running; then TS_DAEMON_OK=true; break; fi
         sleep 1
       done
     fi
@@ -833,12 +831,10 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
     # Attempt 3: manual background start as last resort
     if ! $TS_DAEMON_OK; then
       info "Fallback: starting tailscaled manually..."
-      sudo tailscaled --state=/var/lib/tailscale/tailscaled.state --socket="$TS_SOCKET" &>/dev/null &
+      sudo tailscaled --state=/var/lib/tailscale/tailscaled.state &>/dev/null &
       disown
-      for _ in 1 2 3 4 5 6 7 8; do
-        if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
-          TS_DAEMON_OK=true; break
-        fi
+      for _ in $(seq 1 10); do
+        if _ts_daemon_running; then TS_DAEMON_OK=true; break; fi
         sleep 1
       done
     fi
@@ -846,29 +842,46 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
     if ! $TS_DAEMON_OK; then
       warn "Tailscale daemon failed to start — run 'sudo tailscaled install-system-daemon' manually"
     else
-      # Check if already logged in (timeout 5s to avoid hang)
+      # Extra settle time — daemon process exists but LocalAPI may not be ready
+      sleep 3
+
+      # Check if already logged in
       if ! perl -e 'alarm 5; exec @ARGV' tailscale status &>/dev/null 2>&1; then
         echo ""
         info "下一步将打开浏览器进行 Tailscale 授权"
         echo ""
-        # Run tailscale login in background — capture both stdout AND stderr
-        # (some versions output URL to stderr)
+
+        # Try `tailscale up` first (more reliable URL output than `tailscale login`)
         TS_LOGIN_TMP=$(mktemp /tmp/ts-login.XXXXX)
-        tailscale login > "$TS_LOGIN_TMP" 2>&1 &
+        tailscale up > "$TS_LOGIN_TMP" 2>&1 &
         TS_LOGIN_PID=$!
-        # Wait up to 15s for the URL to appear in the output
+
+        # Wait up to 20s for any URL to appear
         TS_LOGIN_URL=""
-        for _ts_url_wait in $(seq 1 30); do
-          TS_LOGIN_URL=$(grep -oE 'https://login\.tailscale\.com/[^ ]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
+        for _ts_url_wait in $(seq 1 40); do
+          TS_LOGIN_URL=$(grep -oE 'https://[a-zA-Z0-9./_?&=-]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
           if [[ -n "$TS_LOGIN_URL" ]]; then break; fi
           sleep 0.5
         done
+
+        # Fallback: try `tailscale login` if `up` didn't produce a URL
+        if [[ -z "$TS_LOGIN_URL" ]]; then
+          kill "$TS_LOGIN_PID" 2>/dev/null || true
+          wait "$TS_LOGIN_PID" 2>/dev/null || true
+          tailscale login > "$TS_LOGIN_TMP" 2>&1 &
+          TS_LOGIN_PID=$!
+          for _ts_url_wait in $(seq 1 20); do
+            TS_LOGIN_URL=$(grep -oE 'https://[a-zA-Z0-9./_?&=-]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
+            if [[ -n "$TS_LOGIN_URL" ]]; then break; fi
+            sleep 0.5
+          done
+        fi
+
         if [[ -n "$TS_LOGIN_URL" ]]; then
           info "正在打开授权页面..."
           open "$TS_LOGIN_URL" 2>/dev/null || info "请手动打开: $TS_LOGIN_URL"
           info "完成浏览器中的登录后，返回此窗口继续..."
           info "等待授权完成..."
-          # Wait up to 120s for login to complete
           for _ts_wait in $(seq 1 120); do
             if perl -e 'alarm 3; exec @ARGV' tailscale status &>/dev/null 2>&1; then break; fi
             sleep 1
@@ -876,9 +889,11 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
         elif grep -qi "already" "$TS_LOGIN_TMP" 2>/dev/null; then
           : # already logged in
         else
-          # Show manual instructions with the exact command
           warn "Tailscale 授权 URL 未检测到"
-          info "安装完成后请手动运行: tailscale login"
+          info "安装完成后请在新终端运行:"
+          echo ""
+          echo "    tailscale login"
+          echo ""
           info "然后在浏览器中完成授权即可"
         fi
         kill "$TS_LOGIN_PID" 2>/dev/null || true
