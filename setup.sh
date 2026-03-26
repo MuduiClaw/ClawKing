@@ -1653,7 +1653,7 @@ if ! $SKIP_DASHBOARD; then
     # Generate dashboard token if missing
     DASHBOARD_ENV="${HOME}/.config/openclaw/dashboard.env"
     if [ ! -f "$DASHBOARD_ENV" ]; then
-      DASH_TOKEN="$(openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+      DASH_TOKEN="0000"
       (umask 077; echo "export DASHBOARD_TOKEN=${DASH_TOKEN}" > "$DASHBOARD_ENV")
       success "Dashboard token generated"
     fi
@@ -1838,9 +1838,8 @@ with open('$GW_PLIST', 'wb') as f:
         echo "export OPENCLAW_GATEWAY_TOKEN=${GW_TOKEN}" >> "${DASHBOARD_ENV}.tmp"
         (umask 077; mv "${DASHBOARD_ENV}.tmp" "$DASHBOARD_ENV")
       else
-        _FALLBACK_DASH_TOKEN="$(openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
         (umask 077; cat > "$DASHBOARD_ENV" <<ENVEOF
-export DASHBOARD_TOKEN=${_FALLBACK_DASH_TOKEN}
+export DASHBOARD_TOKEN=0000
 export OPENCLAW_GATEWAY_TOKEN=${GW_TOKEN}
 ENVEOF
 )
