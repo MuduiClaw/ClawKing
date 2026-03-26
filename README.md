@@ -64,7 +64,7 @@ cd ClawKing
 - 📧 **可选工具** — 邮件 (himalaya) · Google (gog) · X/Twitter (bird) · RSS (blogwatcher)
 - 🔌 **MCP Bridge** — context7 + deepwiki，实时文档查询
 - 🛡️ **自动守护** — 进程挂了自动重启，不用你盯着
-- 🔧 **27 个脚本** — 升级、备份、日志轮转、健康巡检，运维自动化
+- 🔧 **28 个脚本** — 升级、备份、日志轮转、健康巡检，运维自动化
 
 ## 系统要求
 
@@ -232,7 +232,7 @@ ClawKing/
 │   ├── AGENTS.md            # The Loop 方法论
 │   ├── *.md.example         # 个性化模板
 │   ├── skills/              # 23 个 skills
-│   ├── scripts/             # 27 个脚本
+│   ├── scripts/             # 28 个脚本
 │   └── mcp-bridge/          # MCP 服务
 ├── config/                  # 配置模板
 ├── services/                # LaunchAgent + 启动脚本

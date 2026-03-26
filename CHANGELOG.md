@@ -4,8 +4,21 @@
 
 ---
 
-## [Unreleased]
+## [1.5.1] - 2026-03-26
 
+### ✨ 新功能
+- changelog 自动过滤 `[private]`/`[internal]` 标记的 commit，公开仓库不泄露内部信息
+
+### 🐛 修复
+- `cut-release.sh` 改为推单个 tag，不再 `--tags` 全推
+- 清理 v1.5.0 changelog 中残留的私有产品引用
+
+### 🔧 维护
+- secrets scan 从项目级 `project-gates.sh` 移至全局 Gate 0.4
+- 启用 `.spec-atomic-warn` 观察模式（scope 违规仅警告不阻断）
+- 脚本数量更新 27 → 28
+
+---
 
 ## [1.5.0] - 2026-03-19
 
