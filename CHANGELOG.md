@@ -1,3 +1,12 @@
+## [开发中]
+
+
+### 🐛 修复
+
+- setup.sh — version读取VERSION文件+输入校验+Tailscale daemon检测改进
+
+---
+
 # 更新日志
 
 > ClawKing 🦞 — OpenClaw 开箱即用精装版

@@ -1653,7 +1653,7 @@ if ! $SKIP_DASHBOARD; then
     # Generate dashboard token if missing
     DASHBOARD_ENV="${HOME}/.config/openclaw/dashboard.env"
     if [ ! -f "$DASHBOARD_ENV" ]; then
-      DASH_TOKEN="0000"
+      DASH_TOKEN="$(openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
       (umask 077; echo "export DASHBOARD_TOKEN=${DASH_TOKEN}" > "$DASHBOARD_ENV")
       success "Dashboard token generated"
     fi
@@ -1763,7 +1763,8 @@ else
 fi
 
 # --- Memory System (qmd) ---
-if command -v qmd &>/dev/null; then
+# qmd may be in ~/.local/bin which isn't in PATH yet during install
+if command -v qmd &>/dev/null || [[ -x "${HOME}/.local/bin/qmd" ]]; then
   QMD_SAFE="${OPENCLAW_STATE}/scripts/qmd-safe.sh"
 
   # Initialize core collections
@@ -1837,8 +1838,9 @@ with open('$GW_PLIST', 'wb') as f:
         echo "export OPENCLAW_GATEWAY_TOKEN=${GW_TOKEN}" >> "${DASHBOARD_ENV}.tmp"
         (umask 077; mv "${DASHBOARD_ENV}.tmp" "$DASHBOARD_ENV")
       else
+        _FALLBACK_DASH_TOKEN="$(openssl rand -hex 16 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
         (umask 077; cat > "$DASHBOARD_ENV" <<ENVEOF
-export DASHBOARD_TOKEN=0000
+export DASHBOARD_TOKEN=${_FALLBACK_DASH_TOKEN}
 export OPENCLAW_GATEWAY_TOKEN=${GW_TOKEN}
 ENVEOF
 )
@@ -2048,5 +2050,11 @@ printf "   ${DIM}→ 查看文档: https://docs.openclaw.ai${NC}
 "
 echo ""
 printf "   ${DIM}遇到问题? 运行: openclaw status${NC}
+"
+echo ""
+# Hint: new shell needed for PATH to take effect
+printf "   ${YELLOW}💡 如果命令找不到（如 tailscale、openclaw），请开一个新终端窗口${NC}
+"
+printf "   ${DIM}   或在当前窗口运行: source ~/.zprofile${NC}
 "
 echo ""
