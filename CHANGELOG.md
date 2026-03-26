@@ -13,6 +13,21 @@
 
 ---
 
+## [1.5.2] - 2026-03-26
+
+### 🐛 修复
+- 版本号从 VERSION 文件读取，不再硬编码 v1.3.0
+- LLM/Channel 选择加输入校验，防止误粘 API key 明文泄露
+- Tailscale daemon 检测改进：socket + status 双重判断，brew 成功后不再误触 install-system-daemon
+- SSH setremotelogin 错误信息不再泄露到用户终端
+- qmd 在 launch 阶段检测增加 `~/.local/bin` 回退路径
+- Dashboard token 从硬编码 0000 改为随机生成
+
+### ✨ 改进
+- 安装结束提示用户开新终端或 `source ~/.zprofile`（解决 tailscale/openclaw command not found）
+
+---
+
 ## [1.5.1] - 2026-03-26
 
 ### ✨ 新功能
