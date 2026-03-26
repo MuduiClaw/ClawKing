@@ -1,15 +1,19 @@
 ## [开发中]
 
-
-### 🐛 修复
-
-- setup.sh — version读取VERSION文件+输入校验+Tailscale daemon检测改进
-
 ---
 
 # 更新日志
 
 > ClawKing 🦞 — OpenClaw 开箱即用精装版
+
+---
+
+## [1.5.3] - 2026-03-27
+
+### 🐛 修复
+- Tailscale daemon 检测改用 `pgrep` 替代 socket 文件检查（更可靠）
+- Tailscale 授权改为前台运行 `tailscale up`，让系统自动打开浏览器（之前后台抓 URL 的方案在新版 tailscale 上失效）
+- Dashboard token 恢复为 0000（localhost-only，方便本机访问）
 
 ---
 
