@@ -848,57 +848,26 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
       # Check if already logged in
       if ! perl -e 'alarm 5; exec @ARGV' tailscale status &>/dev/null 2>&1; then
         echo ""
-        info "下一步将打开浏览器进行 Tailscale 授权"
+        info "正在启动 Tailscale 授权..."
+        info "浏览器将自动打开登录页面，完成后返回此窗口"
         echo ""
 
-        # Try `tailscale up` first (more reliable URL output than `tailscale login`)
-        TS_LOGIN_TMP=$(mktemp /tmp/ts-login.XXXXX)
-        tailscale up > "$TS_LOGIN_TMP" 2>&1 &
-        TS_LOGIN_PID=$!
+        # Run `tailscale up` in FOREGROUND — it needs TTY to auto-open browser.
+        # Newer tailscale versions open browser directly instead of printing URL.
+        # Timeout after 120s to avoid blocking forever if something goes wrong.
+        perl -e 'alarm 120; exec @ARGV' tailscale up 2>&1 || true
 
-        # Wait up to 20s for any URL to appear
-        TS_LOGIN_URL=""
-        for _ts_url_wait in $(seq 1 40); do
-          TS_LOGIN_URL=$(grep -oE 'https://[a-zA-Z0-9./_?&=-]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
-          if [[ -n "$TS_LOGIN_URL" ]]; then break; fi
-          sleep 0.5
-        done
-
-        # Fallback: try `tailscale login` if `up` didn't produce a URL
-        if [[ -z "$TS_LOGIN_URL" ]]; then
-          kill "$TS_LOGIN_PID" 2>/dev/null || true
-          wait "$TS_LOGIN_PID" 2>/dev/null || true
-          tailscale login > "$TS_LOGIN_TMP" 2>&1 &
-          TS_LOGIN_PID=$!
-          for _ts_url_wait in $(seq 1 20); do
-            TS_LOGIN_URL=$(grep -oE 'https://[a-zA-Z0-9./_?&=-]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
-            if [[ -n "$TS_LOGIN_URL" ]]; then break; fi
-            sleep 0.5
-          done
-        fi
-
-        if [[ -n "$TS_LOGIN_URL" ]]; then
-          info "正在打开授权页面..."
-          open "$TS_LOGIN_URL" 2>/dev/null || info "请手动打开: $TS_LOGIN_URL"
-          info "完成浏览器中的登录后，返回此窗口继续..."
-          info "等待授权完成..."
-          for _ts_wait in $(seq 1 120); do
-            if perl -e 'alarm 3; exec @ARGV' tailscale status &>/dev/null 2>&1; then break; fi
-            sleep 1
-          done
-        elif grep -qi "already" "$TS_LOGIN_TMP" 2>/dev/null; then
-          : # already logged in
+        # Verify login succeeded
+        if perl -e 'alarm 5; exec @ARGV' tailscale status &>/dev/null 2>&1; then
+          info "Tailscale 授权完成 ✓"
         else
-          warn "Tailscale 授权 URL 未检测到"
+          warn "Tailscale 授权未完成"
           info "安装完成后请在新终端运行:"
           echo ""
-          echo "    tailscale login"
+          echo "    tailscale up"
           echo ""
           info "然后在浏览器中完成授权即可"
         fi
-        kill "$TS_LOGIN_PID" 2>/dev/null || true
-        wait "$TS_LOGIN_PID" 2>/dev/null || true
-        rm -f "$TS_LOGIN_TMP"
       fi
       # Enable Tailscale SSH
       tailscale set --ssh 2>/dev/null || true
