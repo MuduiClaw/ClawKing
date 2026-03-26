@@ -13,9 +13,14 @@ set -uo pipefail
 # Everything else is fully automatic.
 # ============================================================================
 
-CLAWKING_VERSION="1.3.0"
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Read version from VERSION file (single source of truth)
+if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
+  CLAWKING_VERSION="$(cat "$SCRIPT_DIR/VERSION" | tr -d '[:space:]')"
+else
+  CLAWKING_VERSION="dev"
+fi
 
 # --- Defaults ---
 WORKSPACE_DIR="${HOME}/clawd"
@@ -794,24 +799,33 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
     fi
   fi
   if command -v tailscale &>/dev/null; then
-    # Start Tailscale daemon — brew services often silently fails on macOS,
-    # so we verify the socket and fallback to explicit tailscaled if needed.
+    # Start Tailscale daemon — prefer brew services, fallback to system daemon.
+    # Homebrew tailscale socket may be at /var/run/tailscaled.socket OR
+    # the daemon may be reachable without a socket file (newer versions).
     TS_SOCKET="/var/run/tailscaled.socket"
     TS_DAEMON_OK=false
 
-    # Attempt 1: brew services (works on some setups)
+    # Attempt 1: brew services (most common on macOS)
     brew services start tailscale 2>/dev/null || true
-    for _ in 1 2 3 4 5; do
-      if [[ -S "$TS_SOCKET" ]]; then TS_DAEMON_OK=true; break; fi
+    # Check daemon readiness: socket file OR `tailscale status` responds
+    for _ in 1 2 3 4 5 6 7 8; do
+      if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
+        TS_DAEMON_OK=true; break
+      fi
       sleep 1
     done
 
-    # Attempt 2: explicit tailscaled system daemon
+    # Attempt 2: explicit system daemon (only if brew services truly failed)
     if ! $TS_DAEMON_OK; then
+      # Stop brew service first to avoid conflicts
+      brew services stop tailscale 2>/dev/null || true
+      sleep 1
       info "Tailscale daemon not running, installing system daemon..."
       sudo tailscaled install-system-daemon 2>/dev/null || true
-      for _ in 1 2 3 4 5; do
-        if [[ -S "$TS_SOCKET" ]]; then TS_DAEMON_OK=true; break; fi
+      for _ in 1 2 3 4 5 6 7 8; do
+        if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
+          TS_DAEMON_OK=true; break
+        fi
         sleep 1
       done
     fi
@@ -821,8 +835,10 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
       info "Fallback: starting tailscaled manually..."
       sudo tailscaled --state=/var/lib/tailscale/tailscaled.state --socket="$TS_SOCKET" &>/dev/null &
       disown
-      for _ in 1 2 3 4 5; do
-        if [[ -S "$TS_SOCKET" ]]; then TS_DAEMON_OK=true; break; fi
+      for _ in 1 2 3 4 5 6 7 8; do
+        if [[ -S "$TS_SOCKET" ]] || tailscale status &>/dev/null 2>&1; then
+          TS_DAEMON_OK=true; break
+        fi
         sleep 1
       done
     fi
@@ -830,19 +846,19 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
     if ! $TS_DAEMON_OK; then
       warn "Tailscale daemon failed to start — run 'sudo tailscaled install-system-daemon' manually"
     else
-      # Check if already logged in
+      # Check if already logged in (timeout 5s to avoid hang)
       if ! perl -e 'alarm 5; exec @ARGV' tailscale status &>/dev/null 2>&1; then
         echo ""
         info "下一步将打开浏览器进行 Tailscale 授权"
         echo ""
-        # Run tailscale login in background — it blocks until auth completes,
-        # so we capture the URL from a temp file and open browser ourselves.
+        # Run tailscale login in background — capture both stdout AND stderr
+        # (some versions output URL to stderr)
         TS_LOGIN_TMP=$(mktemp /tmp/ts-login.XXXXX)
         tailscale login > "$TS_LOGIN_TMP" 2>&1 &
         TS_LOGIN_PID=$!
-        # Wait up to 10s for the URL to appear in the output
+        # Wait up to 15s for the URL to appear in the output
         TS_LOGIN_URL=""
-        for _ts_url_wait in $(seq 1 20); do
+        for _ts_url_wait in $(seq 1 30); do
           TS_LOGIN_URL=$(grep -oE 'https://login\.tailscale\.com/[^ ]+' "$TS_LOGIN_TMP" 2>/dev/null | head -1)
           if [[ -n "$TS_LOGIN_URL" ]]; then break; fi
           sleep 0.5
@@ -860,7 +876,10 @@ ${BOLD}Tailscale${NC} — 免费的安全组网工具
         elif grep -qi "already" "$TS_LOGIN_TMP" 2>/dev/null; then
           : # already logged in
         else
-          warn "Tailscale login URL not detected — run 'tailscale login' manually later"
+          # Show manual instructions with the exact command
+          warn "Tailscale 授权 URL 未检测到"
+          info "安装完成后请手动运行: tailscale login"
+          info "然后在浏览器中完成授权即可"
         fi
         kill "$TS_LOGIN_PID" 2>/dev/null || true
         wait "$TS_LOGIN_PID" 2>/dev/null || true
@@ -907,7 +926,7 @@ fi
 
 # Attempt 1: systemsetup (需要 Terminal 有 Full Disk Access + sudo)
 if ! $SSH_ENABLED && sudo -n true 2>/dev/null; then
-  sudo systemsetup -setremotelogin on 2>/dev/null && SSH_ENABLED=true
+  sudo systemsetup -setremotelogin on 2>&1 | grep -v "Full Disk Access" >/dev/null && SSH_ENABLED=true
 fi
 
 # Attempt 2: launchctl load (部分 macOS 版本可用)
@@ -1204,8 +1223,15 @@ if [[ "${SKIP_CONFIG:-false}" != "true" ]]; then
   printf "       ${DIM}       Anthropic: https://docs.openclaw.ai/providers/anthropic${NC}
 "
   echo ""
-  ask "> "
-  read -r auth_choice
+  # Validate input: must be 1, 2, or 3
+  auth_choice=""
+  while [[ ! "$auth_choice" =~ ^[123]$ ]]; do
+    ask "> "
+    read -r auth_choice
+    if [[ ! "$auth_choice" =~ ^[123]$ ]]; then
+      warn "请输入 1、2 或 3"
+    fi
+  done
 
   MINIMAX_KEY=""
   ANTHROPIC_MODE=""
@@ -1290,8 +1316,16 @@ if [[ "${SKIP_CONFIG:-false}" != "true" ]]; then
   printf "       ${CYAN}3.${NC} 跳过 ${DIM}(稍后通过 Dashboard 或 openclaw channels add 配置)${NC}
 "
   echo ""
-  ask "> [3] "
-  read -r channel_choice
+  channel_choice=""
+  while [[ ! "$channel_choice" =~ ^[123]?$ ]]; do
+    ask "> [3] "
+    read -r channel_choice
+    if [[ ! "$channel_choice" =~ ^[123]?$ ]]; then
+      warn "请输入 1、2 或 3（直接回车默认 3）"
+    fi
+  done
+  # Default to 3 (skip) if empty
+  channel_choice="${channel_choice:-3}"
 
   case "$channel_choice" in
     1)
