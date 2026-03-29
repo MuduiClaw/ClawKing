@@ -1,121 +1,130 @@
-# Project Gates — 门禁系统
+# 门禁系统 — 让 AI 不能乱搞
 
-> 19 层自动化质量门禁，覆盖从构思到部署的完整 Loop。
-> 每个门禁都是**物理执行**的——能阻断操作，不只是提示。
+> AI Agent 写代码很快，但「快」不等于「对」。
+> 门禁系统在代码流转的关键节点自动检查，确保 AI 产出的东西能用。
 
-![门禁 Dashboard — 按 Loop 阶段展示，含触发/拦截统计](images/gates-hero.png)
+---
 
-## 为什么需要门禁？
+## 工作原理
 
-AI 代理（Codex、Claude Code 等）可以高速产出代码，但高速产出 + 零质量把控 = 高速积累技术债。
+ClawKing 的门禁系统基于 Git Hooks——每次 `commit` 和 `push` 都会自动触发检查。不需要额外的 CI 服务，本地就能拦住问题。
 
-门禁系统在代码流转的关键节点自动检查，确保：
+```
+你写代码 → git commit → prepare-commit-msg 检查 → commit 成功
+                                    ↕
+              commit-msg 自动更新 CHANGELOG
+                                    ↓
+            git push → pre-push 检查 → push 成功
+```
 
-- 复杂变更必须先写 spec、过 Oracle 审查
-- 每次 commit 都通过语法检查 + 签章防伪
-- 每次 push 都有格式、类型、测试、lint 全链路验证
-- 部署后自动验收生产环境
-- 系统级操作有安全阀
+两道防线：
+- **Commit 阶段**（prepare-commit-msg）— 语法检查 + 格式规范 + 防伪签章
+- **Push 阶段**（pre-push）— 全链路验证：类型检查、测试、lint、生产环境
 
-## 安装
+---
+
+## 门禁一览
+
+### Commit 阶段（prepare-commit-msg + commit-msg）
+
+在代码提交时执行，检查通过才能 commit：
+
+| Gate | 名称 | 做什么 | 什么时候触发 |
+|------|------|--------|-------------|
+| **0** | Prompt CHANGELOG | 改了 `.prompt.md` 必须同时更新 `prompts/CHANGELOG.md` | 有 prompt 文件变更 |
+| **0.5** | Scope Lock | staged 文件 > 5 个，commit message 需要加 `[scope-ack]` 确认。防止 `git add -A` 混入无关文件 | staged 文件数超阈值 |
+| **0.7** | Spec 引用 | `feat`/`fix`/`refactor` commit 涉及 ≥2 个代码文件，必须引用 approved spec (`[spec:slug]`) | 有 tasks/ 目录的项目 |
+| **REVIEWED** | 自测确认 | 代码/配置变更需要 `REVIEWED=1 git commit` 确认已自测 | 非 workspace 项目的代码变更 |
+| **Shell** | ShellCheck | `.sh` 文件自动 shellcheck -S warning | 有 .sh 文件变更 |
+| **JSON** | JSON 语法 | `python3 -m json.tool` 验证 | 有 .json 文件变更 |
+| **YAML** | YAML 语法 | `yaml.safe_load` 验证 | 有 .yml/.yaml 文件变更 |
+| **签章** | Tree-hash 签章 | 自动生成 `Pre-commit-gate: <tree-hash>` trailer，防止绕过 hook | 每次 commit |
+
+> **CHANGELOG 自动更新**：commit-msg hook 自动把 commit message 追加到 CHANGELOG.md 的 `[开发中]` 段，不需要手动维护。
+
+### Push 阶段（pre-push）
+
+在代码推送时执行，检查通过才能 push：
+
+| Gate | 名称 | 做什么 | 什么时候触发 |
+|------|------|--------|-------------|
+| **1** | Conventional Commits | 验证每个 commit 的格式：`type[(scope)]: description` | 每次 push |
+| **2** | 反切片 (Anti-salami) | 累计 ≥8 个代码文件变更但没有 `[spec:slug]` 引用 → 阻断。防止大变更拆小 commit 绕过 spec 要求 | 有 tasks/ 目录的项目 |
+| **2.1** | Spec 完整性 | 验证 spec 文件存在且状态不是 abandoned（警告） | 有 spec 引用时 |
+| **3** | Tree-hash 校验 | 对比每个 commit 的 tree-hash trailer 和实际 tree hash，不匹配 = hook 被绕过或 commit 被篡改 | 非 workspace 项目 |
+| **4** | TDD | 有代码变更必须有测试变更。检测整个 push 范围（commit A 改代码 + commit B 补测试 = OK） | 检测到测试框架 |
+| **5** | 类型/Lint | TypeScript → `tsc --noEmit`；JavaScript → `eslint`。30s 超时 | 有 tsconfig.json 或 eslint config |
+| **6** | E2E 感知 | 页面级文件（page.tsx/layout.tsx/App.tsx）变更需要 e2e 测试或 `[e2e-ack]` 确认 | 有 playwright.config.ts |
+| **7** | 截图验收 | spec 标记 delivered 时，验证 `docs/acceptance/<slug>/` 有截图或 showboat report | spec 状态变更 |
+| **8** | 生产验收 | 部署文件（next.config/Dockerfile/CI）变更自动触发 HTTP 健康检查 | 有部署文件变更 |
+
+### 项目特有门禁（project-gates.sh）
+
+每个项目可以在 `.githooks/project-gates.sh` 中添加自己的检查。ClawKing 自带的：
+
+| Gate | 名称 | 做什么 |
+|------|------|--------|
+| **0.4** | Secrets Scan | 扫描 staged 文件中的 API Key / Token 模式 |
+| **P2** | 隐私保护 | 阻止个人路径、姓名等隐私信息进入公开仓库 |
+
+---
+
+## 两种模式
+
+- **Strict 模式**（默认）— 门禁阻断不合规的操作
+- **Workspace 模式** — 项目根有 `SOUL.md` 或 `HEARTBEAT.md`：shellcheck/scope-lock 降级为**警告**（适合文档/配置类仓库）
+
+Workspace 模式下，Gate 2（反切片）和 Gate 3（tree-hash）也会跳过——除非变更涉及 `.githooks/` 目录。
+
+---
+
+## Worktree 隔离工作流
+
+ClawKing 使用 Git Worktree 隔离并发的 AI 编码任务，每个任务在独立的工作目录中执行：
+
+```
+主仓库 ~/projects/ClawKing (main)
+  ├── /tmp/kc-auth-login/     ← Codex Agent A 在做登录
+  ├── /tmp/kc-cron-fleet/     ← Codex Agent B 在做定时任务
+  └── /tmp/kc-gates-fix/      ← Claude Code 在修门禁
+```
+
+**为什么用 worktree？**
+- 每个 Agent 有独立的 staging area，互不干扰
+- 不需要 lockfile——物理隔离比规则更可靠
+- 合并时自动 rebase + 跑门禁 + flock 短锁，保证原子性
+
+**操作流程**：
 
 ```bash
-# 仅当前仓库生效（推荐）
-bash workspace/scripts/setup-gates.sh
+# 1. 创建 worktree（自动检查 repo + AGENTS.md + build）
+bash scripts/spawn-worktree.sh <project-dir> --spec <slug>
+# → 输出 WORKTREE_DIR=/tmp/kc-<slug> + SPAWN_TOKEN
 
-# 全局生效（所有 git 仓库）
-bash workspace/scripts/setup-gates.sh --global
+# 2. 在 worktree 中执行任务
+SPAWN_TOKEN=xxx WORKTREE_DIR=/tmp/kc-<slug> \
+  bash scripts/codex-dispatch.sh <dir> <mode>
 
-# 卸载
-bash workspace/scripts/setup-gates.sh --uninstall
+# 3. 完成后合并回主分支
+bash scripts/merge-worktree.sh /tmp/kc-<slug>
+# → 自动 rebase → 跑门禁 → flock 短锁 merge+push → 清理 worktree
 ```
 
-安装后，所有 `git commit` 和 `git push` 会自动触发门禁检查。
+> Worktree 隔离目前在 `.spec-atomic` 项目（如 ClawKing）中强制启用。其他项目使用 `.spec-atomic-warn` 观察模式——scope 问题只警告不阻断。
 
 ---
 
-## 门禁全览（19 个，按 Loop 阶段）
+## Spec-Driven 任务流
 
-门禁按 **Loop 四步 + 系统防护** 组织：
+门禁与 Spec 任务系统深度集成：
 
 ```
-① 想清楚 → ② 执行 → ③ 验证 → ④ 交付 → 系统防护
+draft → Oracle 审查 → approved → in_progress → delivered → done
 ```
 
-### ① 想清楚（Plan）— 2 个门禁
-
-| ID | 名称 | 执行方式 | 触发条件 | 阻断行为 |
-|---|---|---|---|---|
-| `script-spec-review` | **Oracle Spec 审查** | 脚本 | ≥3 步复杂任务启动前 | `spec-review.sh` 调 Gemini 3.1 Pro 逐 7 维度审查，ITERATE 则 exit 1。3 轮未通过自动 ESCALATE |
-| `hook-spec` | **Spec 引用 + 状态验证** | Git Hook | commit 含 `[spec:slug]` 或 push ≥8 impl 文件 | prepare-commit-msg 验证 spec 文件存在 + status 为 approved/in_progress/done。pre-push Gate 2 强制大变更附带 spec 引用 |
-
-**设计意图**：先想清楚再动手。Oracle 替代人工 review，spec 引用防止"拿到任务直接冲"。
-
-### ② 执行（Execute）— 3 个门禁
-
-| ID | 名称 | 执行方式 | 触发条件 | 阻断行为 |
-|---|---|---|---|---|
-| `script-spawn-preflight` | **Coding Agent 派发门禁** | 脚本 | spawn Codex/Claude Code 前 | `spawn-agent.sh` 检查 3 项：① 是 git repo ② AGENTS.md 存在 ③ baseline build 通过。不过则 exit 1 |
-| `hook-shellcheck` | **Shell 语法检查** | Git Hook | commit 包含 `.sh` 文件 | `shellcheck -S warning` 不过则阻断 commit（Workspace 模式降级为警告） |
-| `hook-json-yaml` | **JSON/YAML 语法检查** | Git Hook | commit 包含 `.json` / `.yml` / `.yaml` | `python3 json.tool` / `yaml.safe_load` 验证语法 |
-
-**设计意图**：执行阶段保证基本质量——agent 有正确的项目上下文，配置/脚本语法无误。
-
-### ③ 验证（Verify）— 5 个门禁
-
-| ID | 名称 | 执行方式 | 触发条件 | 阻断行为 |
-|---|---|---|---|---|
-| `hook-typecheck` | **TypeScript 类型检查** | Git Hook | push 含 .ts/.tsx + 项目有 tsconfig.json | pre-push 跑 `npx tsc --noEmit` (30s timeout)，有错误则 block push |
-| `hook-eslint` | **ESLint 检查** | Git Hook | push 含 .ts/.tsx/.js/.jsx + 项目有 eslint config | pre-push 跑 `npx eslint` (30s timeout)，有错误则 block push |
-| `hook-tdd` | **TDD 门禁** | Git Hook | push 含代码文件变更 + 检测到测试框架 | 整个 push 范围内有代码变更必须有对应测试变更，否则 block push |
-| `ci-eval-regression` | **Eval 回归检测** | CI | push 含 `prompts/` 改动 | Gemini API 对 15 样本真跑评分，pass 数下降 >1 则 CI 失败 |
-| `ci-config-drift` | **Config 漂移检测** | CI | push 到 main | 对比 cron prompt 文件与运行时 cron job 配置，不一致则 CI 失败 |
-
-**设计意图**：push 时全链路验证。TDD 防止"改了代码不写测试"，typecheck/eslint 防止类型和规范错误，CI 防止 prompt 回归和配置漂移。
-
-### ④ 交付（Ship）— 6 个门禁
-
-| ID | 名称 | 执行方式 | 触发条件 | 阻断行为 |
-|---|---|---|---|---|
-| `hook-commit-format` | **Conventional Commits** | Git Hook | push 时逐 commit 验证 | 正则检查 `type[(scope)]: description` 格式，不匹配 block push |
-| `hook-tree-hash` | **Trailer 防伪造** | Git Hook | push 时逐 commit 验证 | 提取 commit tree hash 与 `Pre-commit-gate:` trailer 比对，不匹配/缺失/legacy 均 block |
-| `hook-scope-lock` | **提交范围锁** | Git Hook | commit staged >5 个文件 | 需 `[scope-ack]` 确认，防止 `git add -A` 混入无关文件 |
-| `hook-changelog` | **Prompt CHANGELOG** | Git Hook | commit 含 `.prompt.md` 文件 | 同时要求 `prompts/CHANGELOG.md` 在 staged 中 |
-| `ci-precommit-verify` | **Tree-hash CI 校验** | CI | push 到 main | 服务端二次验证 tree-hash trailer，拦截绕过本地 hook 的 commit |
-| `script-verify-production` | **生产环境验收** | 脚本 | 部署后自动触发 | HTTP 健康检查 + 响应大小 + 错误字符串检测。失败自动尝试重启服务，仍失败则写告警通知 Discord |
-
-**设计意图**：交付时的最终防线。tree-hash 双层（本地 + CI）保证不可绕过；scope-lock 防止范围蔓延；生产验收确保部署真正成功。
-
-### 系统防护 — 3 个门禁
-
-| ID | 名称 | 执行方式 | 触发条件 | 阻断行为 |
-|---|---|---|---|---|
-| `wrapper-self-destruct` | **Gateway 自杀防护** | CLI Wrapper | gateway 进程树内执行 `openclaw gateway stop/restart` | 检测 PID 祖先链，匹配则 exit 1 |
-| `wrapper-config-preflight` | **配置变更预检** | CLI Wrapper | 执行 `openclaw gateway config.patch` | 先跑 `config validate`，失败则 exit 1 + 写审计日志 |
-| `script-gateway-restart` | **Gateway 重启门禁** | 脚本 | 任何组件请求 gateway restart | validate → 写请求文件 → 等人工 Discord DM 确认后才执行 |
-
-**设计意图**：保护基础设施。Agent 不能把自己跑着的 gateway 弄挂，配置变更有审计链，重启需人工确认。
-
----
-
-## 门禁模式
-
-- **Workspace 模式** — 项目根有 `SOUL.md` 或 `HEARTBEAT.md`：shellcheck 等门禁降级为**警告**，不阻断（适合文档/配置类仓库）
-- **Strict 模式** — 默认：门禁阻断不符合规范的操作
-
----
-
-## Telemetry（门禁触发统计）
-
-每个门禁在 **pass（通过）和 block（拦截）** 时都上报事件到 `~/.openclaw/logs/gate-events.jsonl`。
-
-```json
-{"ts":"2026-03-13T01:02:02Z","gate":"hook-tree-hash","result":"pass","repo":"infra-dashboard"}
-```
-
-Dashboard 的门禁页面自动读取这个文件，显示每个门禁的 7 天触发数和拦截数。
-
-**Telemetry 不影响门禁功能**——即使 `gate-telemetry.sh` 不存在或不可执行，门禁本身照常工作（fire-and-forget 模式）。
+- commit 引用 `[spec:slug]` 后，spec 自动从 approved → in_progress
+- commit message 含 "deliver" 关键词时，自动 → delivered
+- 交付时 Gate 7 检查验收证据（截图或 showboat report）
 
 ---
 
@@ -123,76 +132,37 @@ Dashboard 的门禁页面自动读取这个文件，显示每个门禁的 7 天�
 
 ### git-push-safe.sh — TDD 自动补救
 
-当 TDD 门禁（`hook-tdd`）拦截 push 时，可以用这个脚本自动补救：
+TDD 门禁（Gate 4）拦截 push 时，这个脚本可以自动生成测试：
 
 ```bash
 bash scripts/git-push-safe.sh
 ```
 
-工作流程：
-1. 先尝试正常 `git push`
-2. 如果被 TDD 门禁拦截，自动检测缺少测试的代码文件
-3. 调用 Codex 生成对应测试 → Claude Code fallback → 脚手架兜底
+1. 尝试正常 push
+2. 被 TDD 拦截 → 自动检测缺少测试的文件
+3. 调 Codex 生成测试 → Claude Code fallback → 脚手架兜底
 4. 自动 commit 测试 → 重新 push
 
-### spawn-agent.sh — Agent 派发门禁
+### gate-telemetry.sh — 门禁统计
 
-Spawn coding agent（Codex / Claude Code）前的前置检查：
-
-```bash
-bash scripts/spawn-agent.sh <project-dir>
-```
-
-三项检查：
-1. **是 git repo** — 不是则拒绝
-2. **AGENTS.md 存在** — agent 需要项目上下文
-3. **Baseline build 通过** — 不在坏的 build 上浪费 token
+每个门禁 pass/block 时上报事件到 `~/.openclaw/logs/gate-events.jsonl`，infra-dashboard 的门禁页面读取这个文件展示统计。Telemetry 是 fire-and-forget——不影响门禁本身。
 
 ---
 
-## 任务看板（Spec-Driven）
-
-门禁与任务看板深度集成。任务生命周期：
-
-![任务看板 — Spec-Driven 状态流转](images/tasks-hero.png)
-
-```
-draft → Oracle 审查 → approved → in_progress → done
-```
-
-- **Spec 门禁** (`hook-spec`) 确保代码变更引用了 approved 状态的 spec
-- **Anti-salami-slicing** (pre-push Gate 2) 防止大变更拆成小 commit 绕过 spec 要求
-- Dashboard 任务页面自动读取 `tasks/*.md`，展示进度和状态
-
----
-
-## 自定义
-
-### 项目特有门禁
-
-在项目根目录创建 `.githooks/project-gates.sh`，它会在全局门禁之后被 source：
+## 安装
 
 ```bash
-#!/usr/bin/env bash
-# .githooks/project-gates.sh
-# Available vars: $COMMIT_MSG_FILE, $COMMIT_MSG_LINE, $STAGED_FILES, $STAGED_COUNT
+# 当前仓库
+bash workspace/scripts/setup-gates.sh
 
-# 示例：禁止直接修改 dist/ 目录
-for f in $STAGED_FILES; do
-  case "$f" in
-    dist/*) 
-      echo "⛔ BLOCKED: 不要直接修改 dist/ — 运行 npm run build"
-      exit 1 ;;
-  esac
-done
+# 全局（所有 git 仓库）
+bash workspace/scripts/setup-gates.sh --global
+
+# 卸载
+bash workspace/scripts/setup-gates.sh --uninstall
 ```
 
-### 添加新门禁
-
-1. 在 `prepare-commit-msg`（commit 时）或 `pre-push`（push 时）中添加检查逻辑
-2. 遵循模式：检测条件 → 输出错误信息 → `failed=1`（或直接 `exit 1`）
-3. 添加 `_tel <gate-id> <pass|block>` 记录 telemetry（pass 和 block 都要记录）
-4. 在 `infra-dashboard/lib/gates.ts` 注册门禁定义
+安装后所有 `git commit` 和 `git push` 自动触发门禁。
 
 ---
 
@@ -205,35 +175,44 @@ git commit --no-verify -m "emergency fix"
 git push --no-verify
 ```
 
-⚠️ 跳过后 push 时会被 tree-hash 门禁拦截（没有 trailer）。如果确实需要跳过，commit 和 push 都要加 `--no-verify`。即使本地跳过，CI 层的 `ci-precommit-verify` 仍会标记。
+⚠️ 跳过 commit hook 后 push 时会被 Gate 3（tree-hash）拦截。如果确实需要跳过，commit 和 push 都要加 `--no-verify`。
 
-### Commit 被拦截了怎么办？
+### 常见拦截和解法
 
-看输出提示。常见原因：
-
-- `缺 REVIEWED=1` → `REVIEWED=1 git commit -m "..."`
-- `staged files > 5 but no [scope-ack]` → 确认所有文件都该提交，在 message 加 `[scope-ack]`
-- `ShellCheck failed` → 修复 shell 脚本中的问题
-- `no spec reference` → 先写 spec（`tasks/SPEC-TEMPLATE.md`），走审批流程
-
-### Push 被拦截了怎么办？
-
-- `Bad commit format` → `git commit --amend` 修改 message 为 `type(scope): description`
-- `TDD gate` → `bash scripts/git-push-safe.sh` 自动补测试
-- `Typecheck/ESLint failed` → 修复代码中的类型/lint 错误
-- `Tree-hash mismatch` → `git commit --amend --no-edit` 重新生成 trailer
+| 报错 | 解法 |
+|------|------|
+| `缺 REVIEWED=1` | `REVIEWED=1 git commit -m "..."` |
+| `staged files > 5 but no [scope-ack]` | 确认文件列表，message 加 `[scope-ack]` |
+| `Bad commit format` | `git commit --amend` 改为 `type(scope): description` |
+| `TDD gate` | `bash scripts/git-push-safe.sh` 自动补测试 |
+| `Typecheck failed` | `npx tsc --noEmit` 修复类型错误 |
+| `Tree-hash mismatch` | `git commit --amend --no-edit` 重新签章 |
+| `no spec reference` | 先写 spec（`tasks/` 下），走审批再提交 |
 
 ### 支持哪些测试框架？
 
-TDD 门禁自动检测：**Vitest**、**Jest**、**pytest**、**Go test**、**Rust (Cargo)**、**Bats**。检测到任一框架，push 时有代码变更就必须有测试变更。
+Gate 4 自动检测：**Vitest** · **Jest** · **pytest** · **Go test** · **Cargo test** · **Bats**
 
 ### 门禁和 CI 什么关系？
 
-```
-本地门禁 (commit/push)  →  CI (push 后)
-   第一道防线                第二道防线
-   快 (<5s)                 慢但全面
-   可跳过 (--no-verify)     不可跳过
-```
+ClawKing 的门禁全部在本地执行，不依赖 CI。本地 hook = 唯一物理防线。`hooks-audit.yml` 是异步检测层（GitHub Actions），用于审计是否有人绕过了本地 hook。
 
-Tree-hash 是唯一同时有本地 + CI 双层执行的门禁，确保即使本地跳过也能在 CI 拦截。
+---
+
+## 自定义门禁
+
+在项目根目录创建 `.githooks/project-gates.sh`，会在全局门禁之后被 source：
+
+```bash
+#!/usr/bin/env bash
+# Available vars: $COMMIT_MSG_FILE, $COMMIT_MSG_LINE, $STAGED_FILES, $STAGED_COUNT
+
+# 示例：禁止直接修改 dist/
+for f in $STAGED_FILES; do
+  case "$f" in
+    dist/*) 
+      echo "⛔ 不要直接改 dist/ — 跑 npm run build"
+      exit 1 ;;
+  esac
+done
+```
