@@ -1,4 +1,4 @@
-# ClawKing 🦞 — OpenClaw 开箱即用精装版
+# ClawKing 🦞 v1.5.3 — OpenClaw 开箱即用精装版
 
 让 AI 从聊天框里走出来。
 
@@ -16,9 +16,9 @@
 |---|---|
 | 手动配 LLM、频道、工具 | 一行命令，交互式引导全搞定 |
 | AI 没有人格，每次对话从零开始 | 人格和记忆系统已设计好，开口就有性格 |
-| 写了代码不知道对不对 | 19 层自动化门禁，AI 乱搞会被拦住 |
+| 写了代码不知道对不对 | 9 层自动化门禁，AI 乱搞会被拦住 |
 | 不知道系统跑得怎么样 | 可视化监控面板，一眼看全 |
-| 想让 AI 写代码得自己接 | Codex + Claude Code + Gemini 开箱可用 |
+| 想让 AI 写代码得自己接 | Codex + Claude Code 开箱可用 |
 | AI 只在你找它时工作 | 定时任务 7×24 自动巡检、归档、监控 |
 | 进程挂了得自己发现 | 守护进程自动重启 |
 | 能力有限 | 23 个预装技能（设计/开发/文档/研究……）|
@@ -54,17 +54,17 @@ cd ClawKing
 **核心能力：**
 
 - 🧠 **会思考的工作流** — 想清楚 → 执行 → 验证 → 交付 → 复盘，不是无脑对话
-- 💻 **帮你写代码** — Codex + Claude Code + Gemini CLI，三个编码代理开箱可用
+- 💻 **帮你写代码** — Codex + Claude Code，两个编码代理开箱可用
 - 🎯 **23 个技能** — 设计、开发、研究、文档、测试、视频——模块化的能力
-- 🚧 **19 层质量门禁** — AI 写的代码[自动检查](docs/GATES.md)，格式不对、没测试、逻辑错都会被拦住
+- 🚧 **9 层质量门禁** — AI 写的代码[自动检查](docs/GATES.md)，格式不对、没测试、逻辑错都会被拦住
 - ⏰ **7×24 自动干活** — 定时任务引擎，按需配置自动化巡检、归档、监控
 - 📊 **可视化监控** — 服务状态、模型用量、Cron 健康、门禁统计，一眼看全
 - 🎙️ **语音消息** — whisper.cpp 本地语音转文字，无需 API Key
 - 🧩 **记忆系统** — 语义搜索，AI 记住你说过什么、做过什么决定
 - 📧 **可选工具** — 邮件 (himalaya) · Google (gog) · X/Twitter (bird) · RSS (blogwatcher)
 - 🔌 **MCP Bridge** — context7 + deepwiki，实时文档查询
-- 🛡️ **自动守护** — 进程挂了自动重启，不用你盯着
-- 🔧 **28 个脚本** — 升级、备份、日志轮转、健康巡检，运维自动化
+- 🛡️ **自动守护** — Guardian 守护进程 + Watchdog，挂了秒级重启
+- 🔧 **25 个脚本** — 升级、备份、日志轮转、健康巡检，运维自动化
 
 ## 系统要求
 
@@ -78,10 +78,10 @@ Node.js、Homebrew 等依赖全部由安装脚本自动处理。
 ## 安装过程
 
 ```
-🦞 ClawKing 🦞 v1.4.0
+🦞 ClawKing 🦞 v1.5.3
 
 [1/3] 依赖安装
-     OpenClaw ✓  Codex ✓  Claude Code ✓  Gemini CLI ✓
+     OpenClaw ✓  Codex ✓  Claude Code ✓
      qmd ✓  whisper.cpp ✓  himalaya ✓  gog ✓  bird ✓  blogwatcher ✓
 
 [2/3] 配置
@@ -122,7 +122,6 @@ Node.js、Homebrew 等依赖全部由安装脚本自动处理。
 ```bash
 codex           # 首次运行自动打开浏览器登录（OpenAI 账号）
 claude          # 首次运行选择登录方式（Anthropic 账号）
-gemini          # 首次运行通过 Google OAuth 登录
 ```
 
 登录后 ACP 自动启用，AI 可以在对话中调度 coding agent 完成代码任务。
@@ -218,8 +217,8 @@ ClawKing 不是装完就完了——它有**记忆系统**。
 
 监控面板 → infra-dashboard (:3001)
 守护进程 → Guardian Agent (自动恢复)
-后台服务 → 8 个 LaunchAgent
-质量门禁 → 19 层 Git Gates (plan → ship → system)
+后台服务 → 7 个 LaunchAgent
+质量门禁 → 9 层 Git Gates (commit → push → deploy)
 ```
 
 ## 项目结构
@@ -232,7 +231,7 @@ ClawKing/
 │   ├── AGENTS.md            # The Loop 方法论
 │   ├── *.md.example         # 个性化模板
 │   ├── skills/              # 23 个 skills
-│   ├── scripts/             # 28 个脚本
+│   ├── scripts/             # 25 个脚本
 │   └── mcp-bridge/          # MCP 服务
 ├── config/                  # 配置模板
 ├── services/                # LaunchAgent + 启动脚本
@@ -253,7 +252,7 @@ ClawKing/
 | **[Skills](docs/SKILLS-GUIDE.md)** | 三层 Skills 体系和内置 skill 列表 |
 | **[自定义 Skill](docs/CUSTOM-SKILLS.md)** | 从零写一个 Skill 的完整教程 |
 | **[Cron Fleet](docs/CRON-FLEET.md)** | 定时任务使用指南 |
-| **[门禁系统](docs/GATES.md)** | 19 层自动化质量门禁 |
+| **[门禁系统](docs/GATES.md)** | 9 层自动化质量门禁 |
 | **[日常运维](docs/OPS.md)** | 日志、备份、存储清理、监控 |
 | **[架构](docs/ARCHITECTURE.md)** | 系统架构详解 |
 | **[升级](docs/UPGRADE.md)** | 三层升级：OpenClaw / Dashboard / ClawKing |

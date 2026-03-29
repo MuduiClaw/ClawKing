@@ -1,5 +1,11 @@
 ## [开发中]
 
+### 📖 文档
+- README 全面更新：版本号 v1.4.0→v1.5.3、移除 Gemini CLI（已卸载）、门禁 19→9 层、脚本 28→25、LaunchAgent 8→7
+
+### 🔧 维护
+- enable .spec-atomic-warn mode (scope violations warn only)
+
 ---
 
 # 更新日志
@@ -76,6 +82,11 @@
 ### 📖 文档
 
 - AGENTS.md 自动教训沉淀
+
+
+### 🔧 维护
+
+- enable .spec-atomic-warn mode (scope violations warn only)
 
 ---
 
