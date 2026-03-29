@@ -373,7 +373,7 @@ BOOTSTRAP.md ──> 决定启动后的初始化动作
 |------|------|------|
 | Codex | `codex` | 深度代码任务 |
 | Claude Code | `claude` | 多文件推理 |
-| Gemini CLI | `gemini` | 长上下文和多模态 |
+| ~~Gemini CLI~~ | *(已移除)* | — |
 
 ## 基础设施
 - Guardian：自动守护

@@ -261,13 +261,12 @@ gemini
 
 如果你只想先有一个稳定选择：
 
-- 偏执行：看 [Codex 指南](guides/codex.md)
+- 偏执行：看 [Codex 指南](guides/codex.md)（推荐首选）
 - 偏复杂推理：看 [Claude Code 指南](guides/claude-code.md)
-- 偏长上下文 / Google 生态：看 [Gemini CLI 指南](guides/gemini.md)
 
 ### 现在不用做的事
 
-你不需要一开始把三个都调到最优。
+你不需要一开始把两个都调到最优。
 
 先做到：
 
@@ -301,7 +300,6 @@ gemini
 - [工具深度指南](guides/README.md)
 - [Codex 指南](guides/codex.md)
 - [Claude Code 指南](guides/claude-code.md)
-- [Gemini CLI 指南](guides/gemini.md)
 
 ### 如果你想让它开始自动干活
 

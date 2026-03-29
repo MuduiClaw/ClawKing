@@ -19,11 +19,11 @@
 │  Port: 3456                                                 │
 └────────┬──────────┬──────────┬──────────────────────────────┘
          │          │          │
-    ┌────▼───┐ ┌───▼────┐ ┌──▼─────────────┐
-    │ Codex  │ │ Claude │ │  Gemini CLI    │
-    │        │ │  Code  │ │                │
-    └────────┘ └────────┘ └────────────────┘
-         Coding Agents (ACP)
+    ┌────▼───┐ ┌───▼────┐
+    │ Codex  │ │ Claude │
+    │        │ │  Code  │
+    └────────┘ └────────┘
+      Coding Agents (ACP)
 
 ┌─────────────────────────────────────────────────────────────┐
 │              infra-dashboard (localhost:3001)                 │
@@ -56,9 +56,8 @@ OpenClaw 的核心进程。负责：
 
 ### Coding Agents (ACP)
 Agent Control Protocol，让 AI 调度 coding agents：
-- **Codex** — OpenAI 的 coding agent
+- **Codex** — OpenAI 的 coding agent（默认首选）
 - **Claude Code** — Anthropic 的 coding agent
-- **Gemini CLI** — Google 的 coding agent
 
 AI 根据任务复杂度自动选择合适的 agent。
 

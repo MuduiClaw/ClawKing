@@ -30,7 +30,7 @@
 | [discord.md](guides/discord.md) | Discord Bot 详细配置 | Discord 连接、权限、线程 |
 | [codex.md](guides/codex.md) | Codex CLI 编码代理指南 | 安装配置 Codex |
 | [claude-code.md](guides/claude-code.md) | Claude Code 编码代理指南 | 安装配置 Claude Code |
-| [gemini.md](guides/gemini.md) | Gemini CLI 编码代理指南 | 安装配置 Gemini CLI |
+| ~~gemini.md~~ | *(已移除 — Gemini CLI 不再使用)* | — |
 | [oracle.md](guides/oracle.md) | Oracle 代码审查工具 | 代码审查、spec 审查 |
 | [github.md](guides/github.md) | GitHub CLI 集成 | PR、Issue、CI 操作 |
 | [browser.md](guides/browser.md) | 浏览器自动化配置 | Chrome CDP、截图、测试 |
