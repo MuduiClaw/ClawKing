@@ -95,7 +95,7 @@ Codex 会读取当前目录的代码上下文。
 
 > "用 Codex 帮我在 my-project 仓库里加一个用户注册功能"
 
-OpenClaw 会通过 ACP（Agent Client Protocol）启动 Codex 会话。
+OpenClaw 会通过后台 exec worker 启动 Codex 执行任务。
 
 ---
 
@@ -123,17 +123,13 @@ Codex 默认使用 `gpt-5.4`。这是目前编码能力最强的模型，建议�
 
 ## 和 OpenClaw 的集成
 
-### ACP 方式（推荐给聊天场景）
+### Exec worker 方式
 
-在 Discord 线程里启动 Codex 会话：
+在 Discord 线程里派发 Codex 任务：
 
 > "在这个线程里启动 Codex，帮我重构 auth 模块"
 
-OpenClaw 会创建一个 ACP 会话，Codex 的所有输出留在线程里。你可以持续对话、补充需求。
-
-### PTY 方式（推荐给后台任务）
-
-OpenClaw 在后台用 PTY 运行 Codex：
+OpenClaw 会在后台用 PTY 运行 Codex：
 
 ```bash
 # OpenClaw 内部执行方式（你不需要手动跑）
@@ -163,7 +159,7 @@ Codex CLI 是独立的编码代理，能直接读写你本地的文件、运行�
 检查 Key 是否有效、账户是否有余额。去 [platform.openai.com](https://platform.openai.com) 查看。
 
 **Q: 可以限制 Codex 能访问的目录吗？**
-可以。通过 sandbox 配置限制工作目录。ACP 模式下默认隔离。
+可以。通过 sandbox 配置限制工作目录，后台 worker 默认在指定 worktree 内执行。
 
 **Q: Codex 写的代码质量怎么样？**
 取决于 prompt 质量和项目上下文。有好的 AGENTS.md + 测试覆盖 + review 流程，产出质量很高。没有这些——看运气。
@@ -173,5 +169,4 @@ Codex CLI 是独立的编码代理，能直接读写你本地的文件、运行�
 ## 进阶阅读
 
 - [OpenAI Codex 官方文档](https://platform.openai.com/docs)
-- [OpenClaw ACP Agents 文档](https://docs.openclaw.ai/tools/acp-agents)
 - [coding-agent Skill](https://clawhub.com)

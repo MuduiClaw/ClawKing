@@ -86,16 +86,6 @@
     // }
   },
 
-  // === ACP (Coding Agents) ===
-  "acp": {
-    "enabled": true,
-    "dispatch": { "enabled": true },
-    "backend": "acpx",
-    "defaultAgent": "codex",
-    "allowedAgents": ["pi", "claude", "codex", "opencode", "gemini"],
-    "maxConcurrentSessions": 4
-  },
-
   // === 工具配置 ===
   "tools": {
     "profile": "full",
@@ -197,8 +187,7 @@
   //     "feishu": { "enabled": true },
   //     "slack": { "enabled": true },
   //     "telegram": { "enabled": true },
-  //     "whatsapp": { "enabled": true },
-  //     "acpx": { "enabled": true }
+  //     "whatsapp": { "enabled": true }
   //   }
   // },
 

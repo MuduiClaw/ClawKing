@@ -30,7 +30,7 @@
 
 | 指南 | 一句话说明 | 时间 |
 |------|-----------|------|
-| [Discord](discord.md) | 群聊权限、线程、ACP 绑定、消息格式 | 15 分钟 |
+| [Discord](discord.md) | 群聊权限、线程、消息格式 | 15 分钟 |
 | [GitHub](github.md) | gh CLI 核心用法、SSH 配置、CI 查看 | 10 分钟 |
 | [1Password](1password.md) | op CLI 密钥注入、环境变量管理 | 15 分钟 |
 | [Tailscale](tailscale.md) | 远程访问 Gateway、MagicDNS、安全配置 | 10 分钟 |
@@ -39,7 +39,7 @@
 
 | 指南 | 一句话说明 | 时间 |
 |------|-----------|------|
-| [Codex](codex.md) | full-auto 模式、ACP 调度、验收约束 | 20 分钟 |
+| [Codex](codex.md) | full-auto 模式、exec 调度、验收约束 | 20 分钟 |
 | [Claude Code](claude-code.md) | --print 模式、和 Codex 的分工、MCP 集成 | 20 分钟 |
 | [Browser](browser.md) | 隔离 profile、截图验证、headless 模式 | 15 分钟 |
 

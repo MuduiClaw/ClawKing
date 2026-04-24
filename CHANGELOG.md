@@ -16,6 +16,11 @@
 
 > ClawKing 🦞 — OpenClaw 开箱即用精装版
 
+
+### 🔧 维护
+
+- remove ACP runtime configuration
+
 ---
 
 ## [1.5.3] - 2026-03-27

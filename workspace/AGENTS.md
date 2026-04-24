@@ -96,7 +96,7 @@
 
 ## 派发 Coding Agent
 
-> spawn subagent / ACP coding agent 前必须完成：
+> spawn subagent / exec coding agent 前必须完成：
 
 1. **定位仓库**：`git rev-parse --show-toplevel` 校验。
 2. **注入上下文**：读项目 `AGENTS.md`（自包含，无需读全局）。

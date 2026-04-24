@@ -23,7 +23,7 @@
     │ Codex  │ │ Claude │
     │        │ │  Code  │
     └────────┘ └────────┘
-      Coding Agents (ACP)
+      Coding Agents (exec)
 
 ┌─────────────────────────────────────────────────────────────┐
 │              infra-dashboard (localhost:3001)                 │
@@ -54,8 +54,8 @@ OpenClaw 的核心进程。负责：
 - Collections：`memory-root-main`（MEMORY.md）、`memory-dir-main`（journal + archive）
 - Wrapper：`~/.openclaw/scripts/qmd-safe.sh`
 
-### Coding Agents (ACP)
-Agent Control Protocol，让 AI 调度 coding agents：
+### Coding Agents (exec)
+OpenClaw 通过后台 exec worker 调度 coding agents：
 - **Codex** — OpenAI 的 coding agent（默认首选）
 - **Claude Code** — Anthropic 的 coding agent
 

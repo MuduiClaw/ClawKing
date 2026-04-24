@@ -110,7 +110,7 @@ $ openclaw gateway config.patch '{
 
 OpenClaw 支持 Discord 线程。你可以：
 - 让 AI 创建新线程来讨论某个话题
-- 在线程里启动 Codex / Claude Code 编码会话（ACP 绑定）
+- 在线程里让主 Agent 调度 Codex / Claude Code 后台 exec worker
 
 ### 消息格式
 
@@ -168,9 +168,9 @@ OpenClaw 可以给消息添加 emoji 反应。在配置里启用：
 }
 ```
 
-### ACP 线程绑定
+### 编码任务派发
 
-在 Discord 线程里可以启动编码代理（Codex、Claude Code 等），代理的所有输出会留在线程里。详见 [Codex 指南](codex.md) 和 [Claude Code 指南](claude-code.md)。
+在 Discord 线程里可以让主 Agent 调度编码代理（Codex、Claude Code 等）处理后台任务。主 Agent 保持当前线程收件权，worker 通过文件、测试和报告交付结果。详见 [Codex 指南](codex.md) 和 [Claude Code 指南](claude-code.md)。
 
 ---
 

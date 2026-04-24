@@ -606,7 +606,7 @@ for pkg in "${NPM_GLOBALS[@]}"; do
 done
 
 # --- Coding Agent Auth Check ---
-# ACP requires at least one coding agent to be authenticated
+# Coding agents are optional exec workers. Authentication can be completed later.
 AGENT_AUTHED=false
 if command -v claude &>/dev/null; then
   if claude auth status 2>/dev/null | grep -q '"loggedIn": true'; then
@@ -625,14 +625,14 @@ fi
 if ! $AGENT_AUTHED; then
   echo ""
   warn "⚠️  Coding Agent 未认证"
-  info "ACP 功能需要至少一个 coding agent 登录："
+  info "代码任务派发需要至少一个 coding agent 登录："
   printf "   ${CYAN}Codex:${NC}       运行 ${BOLD}codex${NC}（首次启动会自动打开浏览器登录）
 "
   printf "   ${CYAN}Claude Code:${NC} 运行 ${BOLD}claude${NC}（首次启动选择登录方式）
 "
   printf "   ${CYAN}Gemini CLI:${NC}  运行 ${BOLD}gemini${NC}（首次启动通过 Google OAuth 登录）
 "
-  info "安装完成后可随时登录，ACP 功能将自动启用"
+  info "安装完成后可随时登录；OpenClaw 会通过 exec worker 调度代码任务"
   echo ""
 fi
 
@@ -1554,12 +1554,6 @@ config = {
         },
     },
     "channels": channels,
-    "acp": {
-        "enabled": True, "dispatch": {"enabled": True}, "backend": "acpx",
-        "defaultAgent": "codex",
-        "allowedAgents": ["pi", "claude", "codex", "opencode", "gemini"],
-        "maxConcurrentSessions": 4,
-    },
     "tools": tools,
     "skills": {"load": {"watch": False}, "install": {"nodeManager": "npm"}},
     "cron": {"maxConcurrentRuns": 3},

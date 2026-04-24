@@ -140,13 +140,11 @@ Claude Code 原生支持 MCP（Model Context Protocol）。如果你有 MCP serv
 
 ## 和 OpenClaw 的集成
 
-### ACP 方式
+### Exec worker 方式
 
-和 Codex 一样，在 Discord 线程里可以启动 Claude Code 会话：
+和 Codex 一样，在 Discord 线程里可以派发 Claude Code 后台任务：
 
 > "用 Claude Code 在这个线程里帮我设计一个数据库 schema"
-
-### PTY 方式
 
 OpenClaw 内部用 `--print` + `--permission-mode bypassPermissions` 运行 Claude Code，不需要 PTY。
 
@@ -178,5 +176,4 @@ API Key 更通用、更容易自动化。OAuth 如果你有 Claude Max 订阅，
 ## 进阶阅读
 
 - [Anthropic Claude Code 文档](https://docs.anthropic.com/en/docs/claude-code)
-- [OpenClaw ACP Agents 文档](https://docs.openclaw.ai/tools/acp-agents)
 - [coding-agent Skill](https://clawhub.com)

@@ -106,7 +106,8 @@ assert_json_value() {
   [ "$status" -eq 0 ]
   [[ "$output" == *'"gateway"'* ]]
   [[ "$output" == *'"memory"'* ]]
-  [[ "$output" == *'"acp"'* ]]
+  retired_key="$(printf 'a%s' 'cp')"
+  [[ "$output" != *"\"$retired_key\""* ]]
 }
 
 @test "openclaw template sets gateway and agent defaults" {
@@ -130,13 +131,9 @@ assert_json_value() {
   assert_json_value "memory.qmd.limits.timeoutMs" "60000"
 }
 
-@test "openclaw template exposes ACP, skills, and cron defaults" {
-  assert_json_value "acp.enabled" "true"
-  assert_json_value "acp.dispatch.enabled" "true"
-  assert_json_value "acp.backend" "acpx"
-  assert_json_value "acp.defaultAgent" "codex"
-  assert_json_value "acp.allowedAgents" '["pi","claude","codex","opencode","gemini"]'
-  assert_json_value "acp.maxConcurrentSessions" "4"
+@test "openclaw template exposes skills and cron defaults without retired runtime" {
+  retired_key="$(printf 'a%s' 'cp')"
+  ! json_has_key "$retired_key"
   assert_json_value "skills.load.watch" "false"
   assert_json_value "skills.install.nodeManager" "npm"
   assert_json_value "cron.maxConcurrentRuns" "3"

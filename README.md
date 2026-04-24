@@ -115,7 +115,7 @@ Node.js、Homebrew 等依赖全部由安装脚本自动处理。
 
 这些文件升级时**永远不会被覆盖**。
 
-### Coding Agent 认证（ACP）
+### Coding Agent 认证
 
 安装后需要至少登录一个 coding agent，AI 才能调度代码任务：
 
@@ -124,7 +124,7 @@ codex           # 首次运行自动打开浏览器登录（OpenAI 账号）
 claude          # 首次运行选择登录方式（Anthropic 账号）
 ```
 
-登录后 ACP 自动启用，AI 可以在对话中调度 coding agent 完成代码任务。
+登录后 OpenClaw 会通过 exec worker 调度 coding agent 完成代码任务。
 
 ### 常用命令
 
